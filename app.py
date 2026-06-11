@@ -75,7 +75,7 @@ def build_rag(api_key):
     docs = [d for d in docs if d.page_content.strip()]
 
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1500, chunk_overlap=300,
+        chunk_size=800, chunk_overlap=150,
         separators=["\n\n\n", "\n\n", "\n", ". ", ", ", " ", ""]
     )
     chunks = splitter.split_documents(docs)
