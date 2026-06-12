@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import time
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -110,17 +111,34 @@ def format_docs(docs):
         formatted_parts.append(f"--- Source: {source_name} ---\n{doc.page_content}")
     return "\n\n".join(formatted_parts)
 
+def _invoke_with_retry(chain, inputs, max_retries=5):
+    for attempt in range(max_retries):
+        try:
+            return chain.invoke(inputs)
+        except Exception as e:
+            error_msg = str(e)
+            if "429" in error_msg or "rate_limit" in error_msg.lower():
+                time.sleep(10 * (attempt + 1))
+            else:
+                raise e
+    raise Exception("Max retries exceeded due to rate limiting.")
+
 def ask(question, ret, llm, prompt, oos_prompt):
-    verdict = (oos_prompt | llm | StrOutputParser()).invoke({"question": question}).strip().upper()
+    oos_chain = oos_prompt | llm | StrOutputParser()
+    verdict = _invoke_with_retry(oos_chain, {"question": question}).strip().upper()
+    time.sleep(2)
+    
     if "OUT" in verdict:
         return REFUSAL_MESSAGE, []
     
     docs = ret.invoke(question)
-    chain = (
+    rag_chain = (
         {"context": lambda _: format_docs(docs), "question": RunnablePassthrough()}
         | prompt | llm | StrOutputParser()
     )
-    answer = chain.invoke(question)
+    answer = _invoke_with_retry(rag_chain, question)
+    time.sleep(2)
+    
     sources = list(set(d.metadata.get("source", "").split("/")[-1] for d in docs))
     return answer.strip(), sources
 
