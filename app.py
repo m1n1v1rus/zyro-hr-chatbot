@@ -71,7 +71,7 @@ def build_rag(api_key):
         encode_kwargs={"normalize_embeddings": True}
     )
     vs = FAISS.from_documents(chunks, emb)
-    ret = vs.as_retriever(search_type="mmr", search_kwargs={"k": 6, "fetch_k": 20, "lambda_mult": 0.7})
+    ret = vs.as_retriever(search_type="mmr", search_kwargs={"k": 12, "fetch_k": 30, "lambda_mult": 0.7})
 
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.0, max_tokens=512, groq_api_key=api_key)
 
