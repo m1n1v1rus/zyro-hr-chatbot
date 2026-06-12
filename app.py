@@ -42,7 +42,11 @@ with st.sidebar:
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "Hello! Ask me about HR policies."}]
 
-REFUSAL_MESSAGE = "I can only answer HR-related questions from Zyro Dynamics policy documents."
+REFUSAL_MESSAGE = (
+    "I'm sorry, but I can only answer questions related to the company's HR policies "
+    "based on the available policy documents. This question falls outside my scope. "
+    "Please contact the HR department directly for further assistance."
+)
 
 @st.cache_resource
 def build_rag(api_key):
