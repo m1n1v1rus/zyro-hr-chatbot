@@ -43,11 +43,7 @@ with st.sidebar:
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "Hello! Ask me about HR policies."}]
 
-REFUSAL_MESSAGE = (
-    "I'm sorry, but I can only answer questions related to the company's HR policies "
-    "based on the available policy documents. This question falls outside my scope. "
-    "Please contact the HR department directly for further assistance."
-)
+REFUSAL_MESSAGE = "I can only answer HR-related questions from Zyro Dynamics policy documents."
 
 @st.cache_resource
 def build_rag(api_key):
@@ -87,8 +83,13 @@ def build_rag(api_key):
          "4. NEVER hallucinate. NEVER ask which company — just answer.\n"
          "5. CRITICAL — Leave types: Each leave type (Earned, Sick, Maternity, etc.) has DIFFERENT rules. Answer ONLY for the specific leave type asked. NEVER mix rules between leave types.\n"
          "6. CRITICAL — Insurance types: If asked about 'health insurance' or 'medical insurance', answer ONLY about Group Medical Insurance. Ensure you mention the coverage amount of Rs. 5,00,000 per year, and that it covers employee + spouse + up to 2 dependent children, as stated in the policy documents.\n"
-         "7. CRITICAL — Complete lists and timelines: Include EVERY item in the context. NEVER give a partial list. If context has a 7-row APR table, give all 7 rows. If context has 4 WFH types, give all 4 types.\n"
-         "8. Keep answers professional and concise."),
+         "7. CRITICAL — Complete lists and timelines: Include EVERY item in the context. NEVER give a partial list. If context has a 7-row APR table, give all 7 rows. If context has 4 WFH types, give all 4 types. Do NOT include internal process-ownership columns (e.g., 'Owner', 'Department') unless the question specifically asks who is responsible.\n"
+         "8. No repetition: state each fact ONCE; do not restate the conclusion again at the end.\n"
+         "9. CRITICAL — Style: Write in a DIRECT, FACTUAL, policy-document tone — like a sentence "
+         "taken straight from an HR policy manual. Do NOT use conversational framing such as "
+         "'At Acrux Dynamics,' 'According to the policy,' or repeating the company name. "
+         "Do not add extra context the question did not ask for. State the fact(s) plainly "
+         "and concisely, as the source document itself would state them."),
         ("human", "HR POLICY CONTEXT:\n{context}\n\nEMPLOYEE QUESTION:\n{question}")
     ])
 
