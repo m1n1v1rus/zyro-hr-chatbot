@@ -118,7 +118,7 @@ with st.sidebar:
 if "messages" not in st.session_state or not st.session_state.messages:
     st.session_state.messages = [{"role": "assistant", "content": "Hello! I am the Zyro Dynamics HR Assistant. How can I help you today?"}]
 
-REFUSAL_MESSAGE = "I can only answer HR-related questions from Zyro Dynamics policy documents."
+REFUSAL_MESSAGE = "I'm sorry, but I can only answer HR-related questions from Zyro Dynamics policy documents."
 
 @st.cache_resource
 def build_rag(api_key):
@@ -143,7 +143,7 @@ def build_rag(api_key):
         encode_kwargs={"normalize_embeddings": True}
     )
     vs = FAISS.from_documents(chunks, emb)
-    ret = vs.as_retriever(search_type="mmr", search_kwargs={"k": 6, "fetch_k": 20, "lambda_mult": 0.85})
+    ret = vs.as_retriever(search_type="mmr", search_kwargs={"k": 7, "fetch_k": 20, "lambda_mult": 0.85})
 
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.0, max_tokens=512, groq_api_key=api_key)
 
