@@ -161,40 +161,47 @@ def load_pipeline(api_key):
     )
 
     rag_prompt = ChatPromptTemplate.from_messages([
-        ("system", """You are an HR assistant for Zyro Dynamics (also referred to as Acrux Dynamics).
-Answer using ONLY the provided context.
-
-CRITICAL RULES:
-- Extract exact numbers, days, months, percentages, and amounts from the context.
-- When asked about timelines, cite the EXACT duration and condition from policy.
-- Differentiate clearly between different leave types, insurance types, and policy sections.
-- If context mentions multiple similar items, answer ONLY about the specific one asked.
-- The context IS sufficient if it contains the policy rules that answer the question.
-- Cite the source policy name in your answer.
-- If the context lacks information, say: "I cannot answer this based on the available HR policy documents."
-- Be concise and accurate."""),
-        ("human", "Context:\n{context}\n\nQuestion: {question}"),
+        ("system",
+         "You are an HR assistant for Zyro Dynamics (also referred to as Acrux Dynamics).\n"
+         "Answer using ONLY the provided context.\n\n"
+         "CRITICAL RULES:\n"
+         "- Extract exact numbers, days, months, percentages, and amounts from the context.\n"
+         "- When asked about timelines, cite the EXACT duration and condition from policy.\n"
+         "- Differentiate clearly between different leave types, insurance types, and policy sections.\n"
+         "- If context mentions multiple similar items, answer ONLY about the specific one asked.\n"
+         "- The context IS sufficient if it contains the policy rules that answer the question.\n"
+         "- Cite the source policy name in your answer.\n"
+         "- If the context lacks information, say: "
+            "\"I cannot answer this based on the available HR policy documents.\"\n"
+         "- Be concise and accurate."),
+        ("human", "Context:\n{context}\n\nQuestion: {question}")
     ])
 
     oos_prompt = ChatPromptTemplate.from_messages([
-        ("system", """You are a classifier for an HR help desk.
-Determine if the question can be answered using Zyro Dynamics HR policy documents.
-Topics covered: company profile, employee handbook, leave policy (sick, casual, earned, maternity),
-work from home, code of conduct, performance review, compensation & benefits (salary, insurance, ESOPs),
-IT & data security, POSH, onboarding & separation, travel & expense.
-
-Respond with EXACTLY ONE WORD: "IN_SCOPE" or "OUT_OF_SCOPE".
-
-Examples:
-Q: How many sick leaves do I get? -> IN_SCOPE
-Q: What is the vesting schedule for ESOP? -> IN_SCOPE
-Q: What is the meaning of life? -> OUT_OF_SCOPE
-Q: How do I apply for WFH? -> IN_SCOPE
-Q: Tell me a joke -> OUT_OF_SCOPE
-Q: What is Python programming? -> OUT_OF_SCOPE
-Q: How is the claim process for medical insurance? -> IN_SCOPE
-Q: What is the weather today? -> OUT_OF_SCOPE"""),
-        ("human", "Question: {question}"),
+        ("system",
+         "You are a classifier for an HR help desk.\n"
+         "Determine if the question can be answered using Zyro Dynamics HR policy documents.\n"
+         "Topics covered: company profile, employee handbook, leave policy (sick, casual, earned, maternity),\n"
+         "work from home, code of conduct, performance review, compensation & benefits (salary, insurance),\n"
+         "IT & data security, POSH, onboarding & separation, travel & expense.\n\n"
+         "Respond with EXACTLY ONE WORD: \"IN_SCOPE\" or \"OUT_OF_SCOPE\".\n\n"
+         "Examples:\n"
+         "Q: How many sick leaves do I get? -> IN_SCOPE\n"
+         "Q: How do I apply for WFH? -> IN_SCOPE\n"
+         "Q: What is the CTC range for L4 Senior grade? -> IN_SCOPE\n"
+         "Q: What is the health insurance coverage? -> IN_SCOPE\n"
+         "Q: What is the Annual Performance Review timeline? -> IN_SCOPE\n"
+         "Q: If an employee takes sick leave for more than 2 days, what is required? -> IN_SCOPE\n"
+         "Q: What is the vesting schedule for ESOP? -> OUT_OF_SCOPE\n"
+         "Q: How many stock options will I receive as a new joiner? -> OUT_OF_SCOPE\n"
+         "Q: How can I apply for a job at Acrux Dynamics? -> OUT_OF_SCOPE\n"
+         "Q: What is the recruitment and hiring process? -> OUT_OF_SCOPE\n"
+         "Q: What was the company revenue last year? -> OUT_OF_SCOPE\n"
+         "Q: How does AcruxCRM compare to Salesforce? -> OUT_OF_SCOPE\n"
+         "Q: What is the leave policy at Zoho or Freshworks? -> OUT_OF_SCOPE\n"
+         "Q: What is the meaning of life? -> OUT_OF_SCOPE\n"
+         "Q: What is the weather today? -> OUT_OF_SCOPE"),
+        ("human", "Question: {question}")
     ])
 
     def format_docs(docs):
