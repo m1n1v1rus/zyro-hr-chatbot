@@ -156,7 +156,7 @@ def load_pipeline(api_key):
     llm = ChatGroq(
         model="openai/gpt-oss-120b",
         temperature=0.1,
-        max_tokens=512,
+        max_tokens=1024,
         api_key=api_key,
     )
 
@@ -171,6 +171,7 @@ def load_pipeline(api_key):
          "- If context mentions multiple similar items, answer ONLY about the specific one asked.\n"
          "- The context IS sufficient if it contains the policy rules that answer the question.\n"
          "- Cite the source policy name in your answer.\n"
+         "- Do NOT use markdown tables. Use plain text or bullet points only.\n"
          "- If the context lacks information, say: "
             "\"I cannot answer this based on the available HR policy documents.\"\n"
          "- Be concise and accurate."),
