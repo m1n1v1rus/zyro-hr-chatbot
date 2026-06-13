@@ -230,66 +230,52 @@ def build_rag(api_key):
 
     RAG_PROMPT = ChatPromptTemplate.from_messages([
         ("system",
-         "You are an HR assistant for Zyro Dynamics (also referred to as Acrux Dynamics).\n"
-         "Answer using ONLY the provided context.\n\n"
-         "CRITICAL RULES:\n"
-         "1. Extract exact numbers, days, months, percentages, and amounts from the context.\n"
-         "2. When asked about timelines or schedules, include EVERY step — never skip any row or stage.\n"
-         "3. When asked for a list of types or arrangements, include ALL types — never give a partial list.\n"
-         "4. Differentiate clearly between different leave types (Earned, Sick, Maternity, Casual etc.) "
-            "— answer ONLY about the specific leave type asked.\n"
-         "5. Differentiate clearly between insurance types (Group Medical, Personal Accident, Term Life) "
-            "— if asked about health/medical insurance, answer ONLY about Group Medical Insurance.\n"
-         "6. If context mentions multiple similar items, answer ONLY about the specific one asked.\n"
-         "7. The context IS sufficient if it contains the policy rules that answer the question.\n"
-         "8. Cite the source policy name in your answer.\n"
-         "9. If the context lacks information, say: "
-            "\"I cannot answer this based on the available HR policy documents.\"\n"
-         "10. Be concise and accurate."),
-        ("human", "Context:\n{context}\n\nQuestion: {question}")
+         "You are the official HR policy assistant. Answer ONLY using the HR policy context provided.\n"
+         "IMPORTANT: Documents may mention 'Zyro Dynamics' or 'Acrux Dynamics' — treat them as the SAME company.\n"
+         "Rules:\n"
+         "1. Answer ONLY using information explicitly present in the context.\n"
+         "2. Include exact numbers, dates, percentages, durations, and ALL eligibility conditions (e.g., minimum days worked) exactly as they appear. NEVER omit conditions or caveats.\n"
+         "3. If context has PARTIAL information, give that information directly — no refusal preamble.\n"
+         "4. NEVER hallucinate. NEVER ask which company — just answer.\n"
+         "5. CRITICAL — Leave types: Each leave type (Earned, Sick, Maternity, etc.) has DIFFERENT rules. Answer ONLY for the specific leave type asked. NEVER mix rules between leave types.\n"
+         "6. CRITICAL — Insurance types: If asked about 'health insurance' or 'medical insurance', answer ONLY about Group Medical Insurance. Ensure you mention the coverage amount of Rs. 5,00,000 per year, and that it covers employee + spouse + up to 2 dependent children, as stated in the policy documents.\n"
+         "7. CRITICAL — Complete lists and timelines: Include EVERY item in the context. NEVER give a partial list. If context has a 7-row APR table, give all 7 rows. If context has 4 WFH types, give all 4 types. Do NOT include internal process-ownership columns (e.g., 'Owner', 'Department') unless the question specifically asks who is responsible.\n"
+         "8. No repetition: state each fact ONCE; do not restate the conclusion again at the end.\n"
+         "9. CRITICAL — Style: Write in a DIRECT, FACTUAL, policy-document tone — like a sentence "
+         "taken straight from an HR policy manual. Do NOT use conversational framing such as "
+         "'At Acrux Dynamics,' 'According to the policy,' or repeating the company name. "
+         "Do not add extra context the question did not ask for. State the fact(s) plainly "
+         "and concisely, as the source document itself would state them."),
+        ("human", "HR POLICY CONTEXT:\n{context}\n\nEMPLOYEE QUESTION:\n{question}")
     ])
 
     OOS_PROMPT = ChatPromptTemplate.from_messages([
         ("system",
-         "You are a classifier for an HR help desk.\n"
-         "Zyro Dynamics and Acrux Dynamics are the SAME company — treat all questions about either as IN_SCOPE.\n\n"
-         "IN_SCOPE: Any question about HR policies of Zyro Dynamics or Acrux Dynamics, including:\n"
-         "leave policy, salary, CTC ranges, bonus targets, compensation bands, grade structure,\n"
-         "performance review, PIP, health insurance, WFH policy, onboarding, separation,\n"
-         "travel expenses, code of conduct, IT security, POSH, payroll dates.\n\n"
-         "OUT_OF_SCOPE: ESOP/stock options, job applications, recruitment/hiring process,\n"
-         "company revenue/financials, product features, competitor comparisons,\n"
-         "other companies policies.\n\n"
-         "IMPORTANT: If a question mentions 'Acrux Dynamics' or 'Zyro Dynamics' and asks about\n"
-         "HR policy topics — it is ALWAYS IN_SCOPE.\n\n"
-         "Respond with EXACTLY ONE WORD: IN_SCOPE or OUT_OF_SCOPE.\n\n"
-         "Examples:\n"
-         "Q: What is the CTC range and bonus target for an L4 (Senior) grade employee at Acrux Dynamics? -> IN_SCOPE\n"
-         "Q: At what rate does Earned Leave accrue per month at Acrux Dynamics? -> IN_SCOPE\n"
-         "Q: By which date is salary credited each month at Acrux Dynamics? -> IN_SCOPE\n"
-         "Q: What health insurance coverage is provided to employees at Acrux Dynamics? -> IN_SCOPE\n"
-         "Q: When is an employee placed on a PIP at Acrux Dynamics? -> IN_SCOPE\n"
-         "Q: Who is eligible to work from home at Acrux Dynamics? -> IN_SCOPE\n"
-         "Q: How many weeks of maternity leave is an employee entitled to? -> IN_SCOPE\n"
-         "Q: What is the Annual Performance Review timeline? -> IN_SCOPE\n"
-         "Q: What is the maximum Earned Leave carry forward? -> IN_SCOPE\n"
-         "Q: What is the ESOP vesting schedule and how many stock options will I receive as a new joiner? -> OUT_OF_SCOPE\n"
-         "Q: How can I apply for a job at Acrux Dynamics? What is the recruitment and hiring process? -> OUT_OF_SCOPE\n"
-         "Q: What was Acrux Dynamics revenue last year and how is the company performing financially? -> OUT_OF_SCOPE\n"
-         "Q: What are the detailed product features of AcruxCRM? How does it compare to Salesforce? -> OUT_OF_SCOPE\n"
-         "Q: Can you tell me what the leave policy is at Zoho or Freshworks? -> OUT_OF_SCOPE"),
-        ("human", "Question: {question}")
+         "You are a classifier for an HR chatbot. Determine whether the employee question "
+         "can be answered using internal HR policy documents.\n\n"
+         "CRITICAL: The company is sometimes called 'Acrux Dynamics' and sometimes 'Zyro Dynamics'. "
+         "They are the SAME company. Do NOT mark a question OUT_OF_SCOPE just because it mentions 'Acrux Dynamics'.\n\n"
+         "Reply ONLY with one word:\n"
+         "- IN_SCOPE → if the question is about HR policies, leave, salary, compensation bands, "
+         "performance, insurance, WFH, onboarding, separation, travel, conduct, IT security, etc.\n"
+         "- OUT_OF_SCOPE → if the question asks about company revenue, financials, product features, "
+         "competitor comparisons, ESOP/stock options, job applications, or recruitment process."),
+        ("human", "{question}")
     ])
 
     return ret, llm, RAG_PROMPT, OOS_PROMPT
 
 def format_docs(docs):
-    return "\n\n---\n\n".join([
-        f"Source: {d.metadata.get('source', 'Unknown').split('/')[-1]}\n{d.page_content}"
-        for d in docs
-    ])
+    formatted_parts = []
+    for i, doc in enumerate(docs, 1):
+        source_name = doc.metadata.get("source", "HR Policy").split("/")[-1]
+        formatted_parts.append(
+            f"--- Source: {source_name} ---\n{doc.page_content}"
+        )
+    return "\n\n".join(formatted_parts)
 
 def _invoke_with_retry(chain, inputs, max_retries=5):
+    """Retry wrapper that handles Groq rate limits automatically."""
     for attempt in range(max_retries):
         try:
             return chain.invoke(inputs)
@@ -297,6 +283,7 @@ def _invoke_with_retry(chain, inputs, max_retries=5):
             error_msg = str(e)
             if "429" in error_msg or "rate_limit" in error_msg.lower():
                 wait_time = 15 * (attempt + 1)
+                print(f"    ⏳ Rate limit hit, waiting {wait_time}s... (retry {attempt+1}/{max_retries})")
                 time.sleep(wait_time)
             else:
                 raise e
@@ -305,7 +292,7 @@ def _invoke_with_retry(chain, inputs, max_retries=5):
 def ask(question, ret, llm, prompt, oos_prompt):
     oos_chain = oos_prompt | llm | StrOutputParser()
     verdict = _invoke_with_retry(oos_chain, {"question": question}).strip().upper()
-    time.sleep(2)
+    time.sleep(10)
     
     if "OUT" in verdict:
         return REFUSAL_MESSAGE, []
@@ -314,7 +301,7 @@ def ask(question, ret, llm, prompt, oos_prompt):
     context = format_docs(docs)
     chain = prompt | llm | StrOutputParser()
     answer = _invoke_with_retry(chain, {"context": context, "question": question})
-    time.sleep(2)
+    time.sleep(10)
     
     sources = list(set(d.metadata.get("source", "").split("/")[-1] for d in docs))
     return answer.strip(), sources
