@@ -120,7 +120,10 @@ with st.sidebar:
 if "messages" not in st.session_state or not st.session_state.messages:
     st.session_state.messages = [{"role": "assistant", "content": "Hello! I am the Zyro Dynamics HR Assistant. How can I help you today?"}]
 
-REFUSAL_MESSAGE = "I can only answer questions about Zyro Dynamics HR policies from the provided documents."
+REFUSAL_MESSAGE = (
+    "I can only answer questions about Zyro Dynamics HR policies "
+    "from the provided documents."
+)
 
 @st.cache_resource
 def build_rag(api_key):
@@ -147,41 +150,51 @@ def build_rag(api_key):
     vs = FAISS.from_documents(chunks, emb)
     ret = vs.as_retriever(search_type="similarity", search_kwargs={"k": 6})
 
-    llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0.1, max_tokens=512, groq_api_key=api_key)
+    llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0.1, max_tokens=1024, groq_api_key=api_key)
 
     RAG_PROMPT = ChatPromptTemplate.from_messages([
         ("system",
          "You are an HR assistant for Zyro Dynamics (also referred to as Acrux Dynamics).\n"
          "Answer using ONLY the provided context.\n\n"
          "CRITICAL RULES:\n"
-         "- Extract exact numbers, days, months, percentages, and amounts from the context.\n"
-         "- When asked about timelines, cite the EXACT duration and condition from policy.\n"
-         "- Differentiate clearly between different leave types, insurance types, and policy sections.\n"
-         "- If context mentions multiple similar items, answer ONLY about the specific one asked.\n"
-         "- The context IS sufficient if it contains the policy rules that answer the question.\n"
-         "- Cite the source policy name in your answer.\n"
-         "- If the context lacks information, say: \"I cannot answer this based on the available HR policy documents.\"\n"
-         "- Be concise and accurate."),
+         "1. Extract exact numbers, days, months, percentages, and amounts from the context.\n"
+         "2. When asked about timelines or schedules, include EVERY step — never skip any row or stage.\n"
+         "3. When asked for a list of types or arrangements, include ALL types — never give a partial list.\n"
+         "4. Differentiate clearly between different leave types (Earned, Sick, Maternity, Casual etc.) "
+            "— answer ONLY about the specific leave type asked.\n"
+         "5. Differentiate clearly between insurance types (Group Medical, Personal Accident, Term Life) "
+            "— if asked about health/medical insurance, answer ONLY about Group Medical Insurance.\n"
+         "6. If context mentions multiple similar items, answer ONLY about the specific one asked.\n"
+         "7. The context IS sufficient if it contains the policy rules that answer the question.\n"
+         "8. Cite the source policy name in your answer.\n"
+         "9. If the context lacks information, say: "
+            "\"I cannot answer this based on the available HR policy documents.\"\n"
+         "10. Be concise and accurate."),
         ("human", "Context:\n{context}\n\nQuestion: {question}")
     ])
 
     OOS_PROMPT = ChatPromptTemplate.from_messages([
         ("system",
          "You are a classifier for an HR help desk.\n"
-         "Determine if the question can be answered using Zyro Dynamics HR policy documents.\n"
-         "Topics covered: company profile, employee handbook, leave policy (sick, casual, earned, maternity),\n"
-         "work from home, code of conduct, performance review, compensation & benefits (salary, insurance, ESOPs),\n"
-         "IT & data security, POSH, onboarding & separation, travel & expense.\n\n"
-         "Respond with EXACTLY ONE WORD: \"IN_SCOPE\" or \"OUT_OF_SCOPE\".\n\n"
+         "Determine if the question can be answered using Zyro Dynamics HR policy documents.\n\n"
+         "Topics IN_SCOPE: leave policy, salary, compensation bands, performance review, "
+         "health insurance, WFH policy, onboarding, separation, travel expenses, "
+         "code of conduct, IT security, POSH.\n\n"
+         "Topics OUT_OF_SCOPE: ESOP/stock options, job applications, recruitment process, "
+         "company revenue/financials, product features, competitor comparisons, "
+         "other companies' policies.\n\n"
+         "Respond with EXACTLY ONE WORD: IN_SCOPE or OUT_OF_SCOPE.\n\n"
          "Examples:\n"
          "Q: How many sick leaves do I get? -> IN_SCOPE\n"
-         "Q: What is the vesting schedule for ESOP? -> IN_SCOPE\n"
-         "Q: What is the meaning of life? -> OUT_OF_SCOPE\n"
          "Q: How do I apply for WFH? -> IN_SCOPE\n"
-         "Q: Tell me a joke -> OUT_OF_SCOPE\n"
-         "Q: What is Python programming? -> OUT_OF_SCOPE\n"
-         "Q: How is the claim process for medical insurance? -> IN_SCOPE\n"
-         "Q: What is the weather today? -> OUT_OF_SCOPE"),
+         "Q: What is the CTC range for L4? -> IN_SCOPE\n"
+         "Q: What is the health insurance coverage? -> IN_SCOPE\n"
+         "Q: What is the ESOP vesting schedule? -> OUT_OF_SCOPE\n"
+         "Q: How many stock options will I receive? -> OUT_OF_SCOPE\n"
+         "Q: How can I apply for a job here? -> OUT_OF_SCOPE\n"
+         "Q: What was the company revenue last year? -> OUT_OF_SCOPE\n"
+         "Q: How does AcruxCRM compare to Salesforce? -> OUT_OF_SCOPE\n"
+         "Q: What is the leave policy at Zoho? -> OUT_OF_SCOPE"),
         ("human", "Question: {question}")
     ])
 
@@ -200,7 +213,8 @@ def _invoke_with_retry(chain, inputs, max_retries=5):
         except Exception as e:
             error_msg = str(e)
             if "429" in error_msg or "rate_limit" in error_msg.lower():
-                time.sleep(10 * (attempt + 1))
+                wait_time = 15 * (attempt + 1)
+                time.sleep(wait_time)
             else:
                 raise e
     raise Exception("Max retries exceeded due to rate limiting.")
