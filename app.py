@@ -16,7 +16,7 @@ from langchain_core.output_parsers import StrOutputParser
 # ==========================================
 # 💎 PREMIUM UI CONFIGURATION
 # ==========================================
-st.set_page_config(page_title="Zyro HR Help Desk", page_icon="🏢", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Zyro Dynamics · HR Assistant", page_icon="🚀", layout="wide", initial_sidebar_state="expanded")
 
 CUSTOM_CSS = """
 <style>
@@ -28,55 +28,106 @@ CUSTOM_CSS = """
     }
     #MainMenu, footer { visibility: hidden; }
 
-    /* ─── Background ─── */
+    /* ─── Background: Subtle Mesh Gradient ─── */
     .stApp {
-        background: #0f111a;
+        background: #0c0a1a;
+        background-image:
+            radial-gradient(ellipse 80% 60% at 10% 20%, rgba(88, 28, 135, 0.15), transparent),
+            radial-gradient(ellipse 60% 50% at 90% 80%, rgba(15, 23, 42, 0.3), transparent),
+            radial-gradient(ellipse 40% 40% at 50% 10%, rgba(56, 189, 248, 0.08), transparent);
         color: #e2e8f0;
     }
 
-    /* ─── Title ─── */
+    /* ─── Animated Gradient Header ─── */
+    @keyframes shimmer {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
     .zd-header {
-        font-size: 2.2rem;
-        font-weight: 700;
-        margin-bottom: 24px;
-        color: #ffffff;
+        background: linear-gradient(270deg, #7c3aed, #2563eb, #06b6d4, #7c3aed);
+        background-size: 300% 300%;
+        animation: shimmer 6s ease infinite;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 2.6rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        margin-bottom: 5px;
+    }
+    .zd-tagline {
+        color: #94a3b8;
+        font-size: 0.95rem;
+        font-weight: 400;
+        margin-bottom: 30px;
     }
 
     /* ─── Chat Bubbles ─── */
     .stChatMessage {
-        background: #1a1d29 !important;
-        border-radius: 12px !important;
+        background: rgba(15, 13, 31, 0.7) !important;
+        backdrop-filter: blur(10px) !important;
+        border-radius: 14px !important;
         padding: 16px 20px !important;
         margin-bottom: 16px !important;
-        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(124, 58, 237, 0.15) !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
     }
 
     /* ─── Chat Input ─── */
     [data-testid="stChatInput"] {
-        border-radius: 12px !important;
-        border: 1px solid #334155 !important;
-        background: #1e2235 !important;
+        border-radius: 28px !important;
+        border: 1px solid rgba(124, 58, 237, 0.3) !important;
+        background: rgba(15, 13, 31, 0.9) !important;
+        backdrop-filter: blur(8px) !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
     }
     [data-testid="stChatInput"]:focus-within {
-        border-color: #4facfe !important;
+        border-color: #7c3aed !important;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2), 0 8px 32px rgba(0,0,0,0.3) !important;
     }
 
     /* ─── Expander (Sources Box) ─── */
     [data-testid="stExpander"] {
-        background: #1e2235 !important;
-        border: 1px solid #334155 !important;
-        border-radius: 8px !important;
+        background: rgba(15, 23, 42, 0.5) !important;
+        border: 1px solid rgba(56, 189, 248, 0.2) !important;
+        border-radius: 12px !important;
+        overflow: hidden;
+        margin-top: 12px !important;
     }
     [data-testid="stExpander"] summary {
-        color: #e2e8f0 !important;
+        color: #7dd3fc !important;
+        font-weight: 600 !important;
+        padding: 12px 16px !important;
+        background: rgba(15, 23, 42, 0.8) !important;
+    }
+    [data-testid="stExpander"] summary:hover {
+        color: #38bdf8 !important;
+    }
+    [data-testid="stExpanderDetails"] {
+        padding: 12px 16px !important;
+        font-size: 0.85rem;
+        color: #bae6fd;
     }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
-st.markdown('<div class="zd-header">🏢 Zyro Dynamics HR Help Desk</div>', unsafe_allow_html=True)
+
+# ─── Sidebar ───
+with st.sidebar:
+    st.markdown("### 🚀 Zyro Dynamics")
+    st.markdown("HR Intelligence Platform")
+    st.divider()
+    groq_key = st.text_input("🔑 Groq API Key", type="password", value=os.environ.get("GROQ_API_KEY", ""), placeholder="Enter API Key")
+    st.divider()
+    if st.button("🗑️ Clear Chat", use_container_width=True):
+        st.session_state.messages = []
+        st.rerun()
+
+st.markdown('<div class="zd-header">Zyro Dynamics HR Assistant</div>', unsafe_allow_html=True)
+st.markdown('<div class="zd-tagline">Ask anything about company HR policies, leave, salary, and more.</div>', unsafe_allow_html=True)
 
 @st.cache_resource
-def load_pipeline():
+def load_pipeline(api_key):
     corpus_path = os.environ.get(
         "CORPUS_PATH",
         os.path.join(os.path.dirname(__file__), "hr_docs"),
@@ -89,6 +140,7 @@ def load_pipeline():
 
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     chunks = splitter.split_documents(docs)
+    chunks = [c for c in chunks if len(c.page_content.strip()) > 40]
 
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2",
@@ -101,21 +153,11 @@ def load_pipeline():
         search_kwargs={"k": 6},
     )
 
-    groq_key = None
-    if "GROQ_API_KEY" in st.secrets:
-        groq_key = st.secrets["GROQ_API_KEY"]
-    if not groq_key:
-        groq_key = os.environ.get("GROQ_API_KEY")
-
-    if not groq_key:
-        st.error("GROQ_API_KEY not found! Set it in Streamlit Cloud → Settings → Secrets as: GROQ_API_KEY = \"your-key-here\"")
-        st.stop()
-
     llm = ChatGroq(
         model="openai/gpt-oss-120b",
         temperature=0.1,
         max_tokens=512,
-        api_key=groq_key,
+        api_key=api_key,
     )
 
     rag_prompt = ChatPromptTemplate.from_messages([
@@ -157,22 +199,23 @@ Q: What is the weather today? -> OUT_OF_SCOPE"""),
 
     def format_docs(docs):
         return "\n\n---\n\n".join([
-            f"Source: {d.metadata.get('source', 'Unknown')}\n{d.page_content}"
+            f"Source: {d.metadata.get('source', 'Unknown').split('/')[-1]}\n{d.page_content}"
             for d in docs
         ])
 
     return retriever, llm, rag_prompt, oos_prompt, format_docs
 
+
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = [{"role": "assistant", "content": "Hello! I am the Zyro Dynamics HR Assistant. How can I help you today?"}]
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
         if "sources" in msg and msg["sources"]:
-            with st.expander("Sources"):
+            with st.expander("📄 View Sources"):
                 for s in msg["sources"]:
-                    st.write(f"- \u2022 {s.split('/')[-1]}")
+                    st.markdown(f"- **{s.split('/')[-1]}**")
 
 if prompt := st.chat_input("Ask your HR question..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -180,11 +223,18 @@ if prompt := st.chat_input("Ask your HR question..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
+        if not groq_key:
+            st.error("Please enter your Groq API Key in the sidebar.")
+            st.stop()
+            
         with st.spinner("Searching HR policies..."):
-            retriever, llm, rag_prompt, oos_prompt, format_docs = load_pipeline()
+            retriever, llm, rag_prompt, oos_prompt, format_docs = load_pipeline(groq_key)
 
             guard_chain = oos_prompt | llm | StrOutputParser()
             guard_result = guard_chain.invoke({"question": prompt})
+            
+            # Simulated Cool Down
+            time.sleep(2)
 
             if guard_result.strip().upper() != "IN_SCOPE":
                 answer = "I can only answer questions about Zyro Dynamics HR policies from the provided documents."
@@ -195,14 +245,17 @@ if prompt := st.chat_input("Ask your HR question..."):
                 chain = rag_prompt | llm | StrOutputParser()
                 answer = chain.invoke({"context": context, "question": prompt})
                 sources = list(set(
-                    d.metadata.get("source", "Unknown") for d in docs
+                    d.metadata.get("source", "Unknown").split("/")[-1] for d in docs
                 ))
+
+            # Simulated Cool Down
+            time.sleep(2)
 
             st.markdown(answer)
             if sources:
-                with st.expander("Sources"):
+                with st.expander("📄 View Sources"):
                     for s in sources:
-                        st.write(f"- \u2022 {s.split('/')[-1]}")
+                        st.markdown(f"- **{s.split('/')[-1]}**")
 
             st.session_state.messages.append({
                 "role": "assistant",
