@@ -17,7 +17,7 @@ from langsmith import traceable
 # ==========================================
 # 💎 PREMIUM UI CONFIGURATION (React-like)
 # ==========================================
-st.set_page_config(page_title="Zyro HR Assistant", page_icon="✨", layout="wide")
+st.set_page_config(page_title="Zyro HR Assistant", page_icon="✨", layout="wide", initial_sidebar_state="expanded")
 
 CUSTOM_CSS = """
 <style>
@@ -30,7 +30,6 @@ CUSTOM_CSS = """
     /* Hide Streamlit Branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
     
     /* Main Background */
     .stApp {
