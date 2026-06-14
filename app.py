@@ -117,8 +117,9 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "- Extract exact numbers, days, months, percentages, and amounts comprehensively from the context.\n"
      "- Include ALL exceptions, probation rules, dependent coverage, and special conditions mentioned in the context.\n"
      "- Provide comprehensive and highly detailed answers.\n"
-     "- Do NOT use markdown tables. Use bullet points only.\n"
-     "- Cite the source policy name in your answer.\n"),
+     "- Write your answer in clear, concise plain-text paragraphs.\n"
+     "- Do NOT use bullet points, bold text (**), or markdown tables.\n"
+     "- Do NOT append source citations at the end of your answer.\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
 
@@ -244,7 +245,7 @@ def load_pipeline_v2(api_key):
     )
     retriever = vectorstore.as_retriever(
         search_type="similarity",
-        search_kwargs={"k": 8}
+        search_kwargs={"k": 12}
     )
     print("Vector store initialized.")
     print(f"  Total vectors: {vectorstore.index.ntotal}")
