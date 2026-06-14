@@ -272,8 +272,8 @@ def load_pipeline_v2(api_key):
         embedding=embeddings
     )
     retriever = vectorstore.as_retriever(
-        search_type="mmr",
-        search_kwargs={"k": 6, "fetch_k": 20, "lambda_mult": 0.9}
+        search_type="similarity",
+        search_kwargs={"k": 8}
     )
     print("Vector store initialized.")
     print(f"  Total vectors: {vectorstore.index.ntotal}")
