@@ -167,6 +167,8 @@ Q: How many sick leaves do I get? -> IN_SCOPE
 Q: What is the vesting schedule for ESOP? -> IN_SCOPE
 Q: What is the meaning of life? -> OUT_OF_SCOPE
 Q: How do I apply for WFH? -> IN_SCOPE
+Q: What is the CTC range for L4 Senior grade? -> IN_SCOPE
+Q: What is the Annual Performance Review timeline? -> IN_SCOPE
 Q: Tell me a joke -> OUT_OF_SCOPE
 Q: What is Python programming? -> OUT_OF_SCOPE
 Q: How is the claim process for medical insurance? -> IN_SCOPE
