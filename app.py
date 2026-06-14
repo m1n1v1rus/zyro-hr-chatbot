@@ -153,7 +153,7 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
 
 OOS_PROMPT = ChatPromptTemplate.from_messages([
     ("system", """You are a classifier for an HR help desk.
-Determine if the question can be answered using Zyro Dynamics HR policy documents.
+Determine if the question can be answered using Zyro Dynamics (also known as Acrux Dynamics) HR policy documents.
 Topics covered: company profile, employee handbook, leave policy (sick, casual, earned, maternity),
 work from home, code of conduct, performance review, compensation & benefits (salary, insurance, ESOPs),
 IT & data security, POSH, onboarding & separation, travel & expense.
