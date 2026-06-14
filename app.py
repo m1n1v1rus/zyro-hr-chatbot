@@ -149,7 +149,7 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "  7. Increment and promotion letters issued: 15 April\n"
      "- If the context lacks information, say: "
         "\"I cannot answer this based on the available HR policy documents.\"\n"
-     "- Be concise and accurate."),
+     "- Answer completely based on the exact rules provided in the context."),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
 
@@ -273,8 +273,8 @@ def load_pipeline(api_key):
         embedding=embeddings
     )
     retriever = vectorstore.as_retriever(
-        search_type="similarity",
-        search_kwargs={"k": 6}
+        search_type="mmr",
+        search_kwargs={"k": 6, "fetch_k": 20, "lambda_mult": 0.9}
     )
     print("Vector store initialized.")
     print(f"  Total vectors: {vectorstore.index.ntotal}")
