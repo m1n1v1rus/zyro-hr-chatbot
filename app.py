@@ -105,7 +105,7 @@ with st.sidebar:
 st.markdown('<div class="zd-header">Zyro Dynamics HR Assistant</div>', unsafe_allow_html=True)
 st.markdown('<div class="zd-tagline">Ask anything about company HR policies, leave, salary, and more.</div>', unsafe_allow_html=True)
 
-# Global instances for RAG pipeline
+
 retriever = None
 llm = None
 
