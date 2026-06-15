@@ -113,17 +113,13 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
      "You are an HR assistant for Zyro Dynamics (also known as Acrux Dynamics).\n"
      "Answer the question accurately and CONCISELY using ONLY the provided context.\n\n"
-     "POLICY CHEAT SHEET (Ensure these details are included if asked):\n"
-     "- Insurance: Group Medical (Rs. 5,00,000 floater for emp, spouse, 2 kids), Personal Accident (5x CTC), Term Life (3x CTC).\n"
-     "- ESOP: L5 and above, 4-year vesting with 1-year cliff. Exact number of options is NOT specified.\n"
-     "- Maternity: 26 weeks for first two births, 80 days min service, 8 weeks pre-natal.\n"
-     "- Performance: PIP is 60-90 days for rating 1 or 2 in two consecutive cycles.\n\n"
      "CRITICAL RULES:\n"
-     "- State the rule precisely. Provide ALL specific numbers, days, and conditions.\n"
-     "- ALWAYS cite the exact policy name at the very end of your answer exactly like this: Source: [Policy Name]\n"
+     "- State the rule precisely. Provide ALL specific numbers, days, and conditions from the context without any extra padding.\n"
+     "- ALWAYS cite the short policy name at the very end of your answer exactly like this: Source: [Short Policy Name] (e.g., 'Source: Leave Policy' instead of the full document code).\n"
      "- Do NOT use brackets or a period after the policy name. (EXCEPTION: Do not cite any source if you are refusing to answer).\n"
      "- Write your answer in a SINGLE, plain-text paragraph. Do NOT use bullet points (-), markdown formatting, or bold text (**).\n"
-     "- Answer ONLY what is explicitly asked. If asked about Health Insurance, DO NOT mention Term Life.\n"
+     "- Answer ONLY what is explicitly asked. Keep answers as brief as possible.\n"
+     "- If asked about the number of ESOP options, answer the other parts of the question but state that the exact number is not specified.\n"
      "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions about Zyro Dynamics HR policies from the provided documents.') if the question is completely unanswerable. NEVER append it to a partial answer.\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
@@ -255,19 +251,16 @@ def load_pipeline_v2(api_key):
         embedding=embeddings
     )
     retriever = vectorstore.as_retriever(
-        search_type="mmr",
         search_kwargs={
-            "k": 10,
-            "fetch_k": 30,
-            "lambda_mult": 0.7
+            "k": 20
         }
     )
     print("Vector store initialized.")
     print(f"  Total vectors: {vectorstore.index.ntotal}")
-    print(f"  Retriever    : MMR (k=5, fetch_k=20, lambda_mult=0.7)")
+    print(f"  Retriever    : Standard (k=20)")
 
     llm = ChatGroq(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         temperature=0.1,
         max_tokens=1024,
         api_key=api_key,
