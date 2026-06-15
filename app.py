@@ -251,16 +251,19 @@ def load_pipeline_v2(api_key):
         embedding=embeddings
     )
     retriever = vectorstore.as_retriever(
+        search_type="mmr",
         search_kwargs={
-            "k": 20
+            "k": 10,
+            "fetch_k": 30,
+            "lambda_mult": 0.7
         }
     )
     print("Vector store initialized.")
     print(f"  Total vectors: {vectorstore.index.ntotal}")
-    print(f"  Retriever    : Standard (k=20)")
+    print(f"  Retriever    : MMR (k=10, fetch_k=30)")
 
     llm = ChatGroq(
-        model="openai/gpt-oss-120b",
+        model="llama-3.3-70b-versatile",
         temperature=0.1,
         max_tokens=1024,
         api_key=api_key,
