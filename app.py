@@ -246,14 +246,14 @@ def load_pipeline_v2(api_key):
     retriever = vectorstore.as_retriever(
         search_type="mmr",
         search_kwargs={
-            "k": 12,
-            "fetch_k": 30,
-            "lambda_mult": 0.7
+            "k": 20,
+            "fetch_k": 100,
+            "lambda_mult": 0.5
         }
     )
     print("Vector store initialized.")
     print(f"  Total vectors: {vectorstore.index.ntotal}")
-    print(f"  Retriever    : Similarity (k=6)")
+    print(f"  Retriever    : MMR (k=20, fetch_k=100, lambda_mult=0.5)")
 
     llm = ChatGroq(
         model="openai/gpt-oss-120b",
