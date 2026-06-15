@@ -213,7 +213,7 @@ def ask_bot(question: str) -> dict:
     if "OUT" in verdict:
         return {"answer": REFUSAL_MESSAGE, "sources": [], "blocked": True}
     result = rag_chain(question)
-    if result["answer"] == REFUSAL_MESSAGE:
+    if REFUSAL_MESSAGE in result["answer"]:
         result["blocked"] = True
     else:
         result["blocked"] = False
