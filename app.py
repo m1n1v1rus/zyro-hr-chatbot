@@ -182,10 +182,23 @@ def rag_chain(question: str):
         | StrOutputParser()
     )
     answer = chain.invoke(question)
-    sources = list(set(
-        doc.metadata.get("source", "HR Policy").split("/")[-1]
-        for doc in retrieved_docs
-    ))
+    
+    # Extract the exact source cited by the LLM
+    import re
+    sources = []
+    match = re.search(r'Source:\s*([^\.]+)', answer, re.IGNORECASE)
+    if match:
+        cited_policy = match.group(1).strip()
+        # Find the matching PDF filename from retrieved docs
+        for doc in retrieved_docs:
+            filename = doc.metadata.get("source", "HR Policy").split("/")[-1].split("\\")[-1]
+            # Match "Leave Policy" with "02_Leave_Policy.pdf"
+            if cited_policy.replace(" ", "_").lower() in filename.lower():
+                sources.append(filename)
+                break
+        if not sources:
+            sources.append(f"{cited_policy}.pdf")
+            
     return {
         "answer": answer.strip(),
         "sources": sources,
