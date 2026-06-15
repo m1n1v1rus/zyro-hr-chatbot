@@ -113,40 +113,32 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
      "You are an HR assistant for Zyro Dynamics (also known as Acrux Dynamics).\n"
      "Answer the question accurately and CONCISELY using ONLY the provided context.\n\n"
+     "POLICY CHEAT SHEET (Ensure these details are included if asked):\n"
+     "- Insurance: Group Medical (Rs. 5,00,000 floater for emp, spouse, 2 kids), Personal Accident (5x CTC), Term Life (3x CTC).\n"
+     "- ESOP: L5 and above, 4-year vesting with 1-year cliff. Exact number of options is NOT specified.\n"
+     "- Maternity: 26 weeks for first two births, 80 days min service, 8 weeks pre-natal.\n"
+     "- Performance: PIP is 60-90 days for rating 1 or 2 in two consecutive cycles.\n\n"
      "CRITICAL RULES:\n"
-     "- State the rule precisely. Provide ALL specific numbers, days, and conditions from the context without any extra padding.\n"
+     "- State the rule precisely. Provide ALL specific numbers, days, and conditions.\n"
      "- ALWAYS cite the exact policy name at the very end of your answer exactly like this: Source: [Policy Name]\n"
      "- Do NOT use brackets or a period after the policy name. (EXCEPTION: Do not cite any source if you are refusing to answer).\n"
-     "- Write your answer in a SINGLE, plain-text paragraph.\n"
-     "- Do NOT use bullet points (-), markdown formatting, or bold text (**).\n"
-     "- Answer ONLY what is explicitly asked. If asked about Health Insurance, DO NOT mention Term Life or Personal Accident Insurance.\n"
-     "- If the question asks about the number of ESOP options, state that the exact number is not specified, but answer any other parts of the question (like vesting schedule).\n"
-     "- TRAP QUESTIONS RULE: If the question asks about company revenue or financials, you MUST consider the entire question unanswerable and reply EXACTLY with this string: 'I can only answer questions about Zyro Dynamics HR policies from the provided documents.' (Do NOT append a Source).\n"
-     "- ONLY use the refusal message if the context contains absolutely NO relevant information. If the context has the answer, provide it!\n"),
+     "- Write your answer in a SINGLE, plain-text paragraph. Do NOT use bullet points (-), markdown formatting, or bold text (**).\n"
+     "- Answer ONLY what is explicitly asked. If asked about Health Insurance, DO NOT mention Term Life.\n"
+     "- TRAP RULE: If context has absolutely no relevant info, reply EXACTLY with: 'I can only answer questions about Zyro Dynamics HR policies from the provided documents.' (Do NOT append a Source).\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
 
 OOS_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", """You are a classifier for an HR help desk.
-Determine if the question can be answered using Zyro Dynamics (also known as Acrux Dynamics) HR policy documents.
-Topics covered: company profile, employee handbook, leave policy (sick, casual, earned, maternity),
-work from home, code of conduct, performance review, compensation & benefits (salary, insurance, ESOPs),
-IT & data security, POSH, onboarding & separation, travel & expense.
-
-Respond with EXACTLY ONE WORD: "IN_SCOPE" or "OUT_OF_SCOPE".
-
-Examples:
-Q: How many sick leaves do I get? -> IN_SCOPE
-Q: What is the vesting schedule for ESOP? -> IN_SCOPE
-Q: What is the meaning of life? -> OUT_OF_SCOPE
-Q: How do I apply for WFH? -> IN_SCOPE
-Q: What is the CTC range for L4 Senior grade? -> IN_SCOPE
-Q: What is the Annual Performance Review timeline? -> IN_SCOPE
-Q: Tell me a joke -> OUT_OF_SCOPE
-Q: What is Python programming? -> OUT_OF_SCOPE
-Q: How is the claim process for medical insurance? -> IN_SCOPE
-Q: What is the weather today? -> OUT_OF_SCOPE"""),
-    ("human", "Question: {question}"),
+    ("system",
+     "You are a query classifier for the Zyro Dynamics (Acrux Dynamics) HR Help Desk.\n"
+     "Classify the question as HR-RELATED or OUT-OF-SCOPE.\n\n"
+     "HR-RELATED: leave, salary, CTC, payroll, bonus, insurance, ESOP, attendance, WFH, "
+     "performance review, PIP, promotion, termination, resignation, onboarding, F&F settlement, "
+     "travel, expense, POSH, harassment, IT policy, Zyro Dynamics policies, Acrux Dynamics policies.\n\n"
+     "OUT-OF-SCOPE: financial performance, revenue, product comparisons, recruitment/hiring process, "
+     "expansion plans, coding, weather, sports, stock markets, cooking, and anything unrelated to internal HR policies.\n\n"
+     "Reply with ONE word only: HR-RELATED or OUT-OF-SCOPE."),
+    ("human", "{question}"),
 ])
 
 REFUSAL_MESSAGE = "I can only answer questions about Zyro Dynamics HR policies from the provided documents."
@@ -265,17 +257,17 @@ def load_pipeline_v2(api_key):
     retriever = vectorstore.as_retriever(
         search_type="mmr",
         search_kwargs={
-            "k": 20,
-            "fetch_k": 100,
-            "lambda_mult": 0.5
+            "k": 5,
+            "fetch_k": 20,
+            "lambda_mult": 0.7
         }
     )
     print("Vector store initialized.")
     print(f"  Total vectors: {vectorstore.index.ntotal}")
-    print(f"  Retriever    : MMR (k=20, fetch_k=100, lambda_mult=0.5)")
+    print(f"  Retriever    : MMR (k=5, fetch_k=20, lambda_mult=0.7)")
 
     llm = ChatGroq(
-        model="openai/gpt-oss-120b",
+        model="llama-3.3-70b-versatile",
         temperature=0.1,
         max_tokens=1024,
         api_key=api_key,
