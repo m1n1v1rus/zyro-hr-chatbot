@@ -115,11 +115,13 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "Answer the question accurately and CONCISELY using ONLY the provided context.\n\n"
      "CRITICAL RULES:\n"
      "- State the rule precisely. Provide ALL specific numbers, days, and conditions from the context without any extra padding.\n"
-     "- ALWAYS cite the exact policy name at the very end of your answer exactly like this: Source: [Policy Name]. Do NOT use brackets. (EXCEPTION: Do not cite any source if you are refusing to answer).\n"
+     "- ALWAYS cite the exact policy name at the very end of your answer exactly like this: Source: [Policy Name]\n"
+     "- Do NOT use brackets or a period after the policy name. (EXCEPTION: Do not cite any source if you are refusing to answer).\n"
      "- Write your answer in a SINGLE, plain-text paragraph.\n"
      "- Do NOT use bullet points (-), markdown formatting, or bold text (**).\n"
      "- Answer ONLY what is explicitly asked. If asked about Health Insurance, DO NOT mention Term Life or Personal Accident Insurance.\n"
-     "- TRAP QUESTIONS RULE: If the question asks about company revenue, financials, or ANY detail regarding the NUMBER of ESOP options (even if it also asks about vesting or eligibility), you MUST consider the entire question unanswerable and reply EXACTLY with this string: 'I can only answer questions about Zyro Dynamics HR policies from the provided documents.' (Do NOT append a Source).\n"
+     "- If the question asks about the number of ESOP options, state that the exact number is not specified, but answer any other parts of the question (like vesting schedule).\n"
+     "- TRAP QUESTIONS RULE: If the question asks about company revenue or financials, you MUST consider the entire question unanswerable and reply EXACTLY with this string: 'I can only answer questions about Zyro Dynamics HR policies from the provided documents.' (Do NOT append a Source).\n"
      "- ONLY use the refusal message if the context contains absolutely NO relevant information. If the context has the answer, provide it!\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
