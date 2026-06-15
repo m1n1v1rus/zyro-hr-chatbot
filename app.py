@@ -111,16 +111,16 @@ llm = None
 
 RAG_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
-     "You are an HR assistant for Zyro Dynamics (also referred to as Acrux Dynamics).\n"
-     "Answer using ONLY the provided context.\n\n"
+     "You are an HR assistant for Zyro Dynamics (also known as Acrux Dynamics).\n"
+     "Answer the question accurately and CONCISELY using ONLY the provided context.\n\n"
      "CRITICAL RULES:\n"
-     "- Answer ONLY what is explicitly asked. Do NOT include extra information or adjacent policies.\n"
-     "- If the question asks about Health Insurance, DO NOT mention Term Life or Personal Accident Insurance.\n"
-     "- If the question asks about ESOPs, focus ONLY on the vesting schedule and grade eligibility.\n"
-     "- Be extremely direct. Avoid fluff and overly verbose explanations.\n"
-     "- Write your answer in a clear, concise plain-text paragraph.\n"
-     "- Do NOT use bullet points, bold text (**), or markdown tables.\n"
-     "- Do NOT append source citations at the end of your answer.\n"),
+     "- State the rule precisely. Provide ALL specific numbers, days, and conditions from the context without any extra padding.\n"
+     "- ALWAYS cite the exact policy name at the end of your answer (e.g., 'Source: Leave Policy').\n"
+     "- Write your answer in a SINGLE, plain-text paragraph.\n"
+     "- Do NOT use bullet points (-), markdown formatting, or bold text (**).\n"
+     "- Answer ONLY what is explicitly asked. If asked about Health Insurance, DO NOT mention Term Life or Personal Accident Insurance.\n"
+     "- 🛑 TRAP QUESTIONS RULE: If the question asks about company revenue, financials, or the EXACT NUMBER of ESOP options, you MUST reply EXACTLY with this string: 'I can only answer questions about Zyro Dynamics HR policies from the provided documents.'\n"
+     "- For any other question, if the answer is completely missing from the context, use the exact same refusal message above.\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
 
@@ -147,7 +147,7 @@ Q: What is the weather today? -> OUT_OF_SCOPE"""),
     ("human", "Question: {question}"),
 ])
 
-REFUSAL_MESSAGE = "I can only answer questions based on Zyro Dynamics HR policy documents, and the available HR documents do not contain information to answer this request."
+REFUSAL_MESSAGE = "I can only answer questions about Zyro Dynamics HR policies from the provided documents."
 
 def format_docs(docs):
     formatted_parts = []
