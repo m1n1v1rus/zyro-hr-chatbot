@@ -110,16 +110,16 @@ llm = None
 
 RAG_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
-     "You are an HR assistant for Zyro Dynamics (also known as Acrux Dynamics).\n"
+     "You are an HR assistant for Zyro Dynamics.\n"
      "Answer the question accurately and CONCISELY using ONLY the provided context.\n\n"
      "CRITICAL RULES:\n"
-     "- State the rule precisely. Provide ALL specific numbers, days, and conditions from the context without any extra padding.\n"
-     "- Write your answer in a SINGLE, plain-text paragraph. Do NOT use bullet points (-), markdown formatting, or bold text (**).\n"
-     "- Answer ONLY what is explicitly asked. Keep answers as brief as possible.\n"
-     "- Do NOT append source citations at the end of your answer. Just provide the factual answer.\n"
-     "- Do NOT hedge with phrases like 'not fully specified' or 'may vary' unless it is genuinely missing from context.\n"
-     "- For WFH questions: Minimum eligibility requires 6 months of continuous service, grade L3 or above, and a performance rating of Meets Expectations or above. List all four arrangement types (Hybrid WFH, Full Remote, Ad-hoc WFH, Emergency WFH) with their eligibility grade and max days per week.\n"
-     "- For ESOP questions: ESOPs are eligible for grade L5 and above. The vesting schedule is 4 years with a 1-year cliff: 25% vests at end of Year 1, 25% at end of Year 2, and 50% at end of Year 4. The number of options granted is not specified in the policy.\n"
+     "- Answer ONLY what is explicitly asked. Do NOT include extra information or adjacent policies.\n"
+     "- If the question asks about Health Insurance, DO NOT mention Term Life or Personal Accident Insurance.\n"
+     "- If the question asks about ESOPs, focus ONLY on the vesting schedule and grade eligibility.\n"
+     "- Be extremely direct. Avoid fluff and overly verbose explanations.\n"
+     "- Write your answer in a SINGLE, clear, concise plain-text paragraph.\n"
+     "- Do NOT use bullet points (-), bold text (**), or markdown tables.\n"
+     "- Do NOT append source citations at the end of your answer.\n"
      "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions related to Zyro Dynamics HR policies. Your question is outside my scope. Please contact the relevant department directly.') if the question is completely unanswerable. NEVER append it to a partial answer.\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
@@ -243,14 +243,14 @@ def load_pipeline_v2(api_key):
     retriever = vectorstore.as_retriever(
         search_type="mmr",
         search_kwargs={
-            "k": 10,
-            "fetch_k": 50,
-            "lambda_mult": 0.7
+            "k": 20,
+            "fetch_k": 100,
+            "lambda_mult": 0.5
         }
     )
     print("Vector store initialized.")
     print(f"  Total vectors: {vectorstore.index.ntotal}")
-    print(f"  Retriever    : MMR (k=10, fetch_k=50, lambda_mult=0.7)")
+    print(f"  Retriever    : MMR (k=20, fetch_k=100, lambda_mult=0.5)")
 
     llm = ChatGroq(
         model="llama-3.3-70b-versatile",
