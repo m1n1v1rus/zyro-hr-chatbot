@@ -119,7 +119,8 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "- Do NOT use brackets or a period after the policy name. (EXCEPTION: Do not cite any source if you are refusing to answer).\n"
      "- Write your answer in a SINGLE, plain-text paragraph. Do NOT use bullet points (-), markdown formatting, or bold text (**).\n"
      "- Answer ONLY what is explicitly asked. Keep answers as brief as possible.\n"
-     "- If asked about the number of ESOP options, answer the other parts of the question but state that the exact number is not specified.\n"
+     "- For WFH questions: Minimum eligibility requires 6 months of continuous service, grade L3 or above, and a performance rating of Meets Expectations or above. List all four arrangement types (Hybrid WFH, Full Remote, Ad-hoc WFH, Emergency WFH) with their eligibility grade and max days per week.\n"
+     "- For ESOP questions: ESOPs are eligible for grade L5 and above. The vesting schedule is 4 years with a 1-year cliff: 25% vests at end of Year 1, 25% at end of Year 2, and 50% at end of Year 4. The number of options granted is not specified in the policy.\n"
      "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions about Zyro Dynamics HR policies from the provided documents.') if the question is completely unanswerable. NEVER append it to a partial answer.\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
@@ -199,7 +200,7 @@ def rag_chain(question: str):
 def ask_bot(question: str) -> dict:
     classifier_chain = OOS_PROMPT | llm | StrOutputParser()
     verdict = _invoke_with_retry(classifier_chain, {"question": question}).strip().upper()
-    time.sleep(10)
+    time.sleep(3)
     if "OUT" in verdict:
         return {"answer": REFUSAL_MESSAGE, "sources": [], "blocked": True}
     result = rag_chain(question)
@@ -207,7 +208,7 @@ def ask_bot(question: str) -> dict:
         result["blocked"] = True
     else:
         result["blocked"] = False
-    time.sleep(10)
+    time.sleep(3)
     return result
 
 @st.cache_resource
@@ -220,10 +221,10 @@ def load_pipeline_v2(api_key):
     docs = loader.load()
     
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200,
+        chunk_size=600,
+        chunk_overlap=100,
         length_function=len,
-        separators=["\n\n\n", "\n\n", "\n", ". ", ", ", " ", ""],
+        separators=["\n\n", "\n", ". ", ", ", " ", ""],
         is_separator_regex=False
     )
     chunks = splitter.split_documents(docs)
@@ -253,19 +254,19 @@ def load_pipeline_v2(api_key):
     retriever = vectorstore.as_retriever(
         search_type="mmr",
         search_kwargs={
-            "k": 10,
+            "k": 6,
             "fetch_k": 30,
             "lambda_mult": 0.7
         }
     )
     print("Vector store initialized.")
     print(f"  Total vectors: {vectorstore.index.ntotal}")
-    print(f"  Retriever    : MMR (k=10, fetch_k=30)")
+    print(f"  Retriever    : MMR (k=6, fetch_k=30, lambda_mult=0.7)")
 
     llm = ChatGroq(
         model="llama-3.3-70b-versatile",
-        temperature=0.1,
-        max_tokens=1024,
+        temperature=0.0,
+        max_tokens=512,
         api_key=api_key,
     )
 
