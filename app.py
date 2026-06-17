@@ -121,7 +121,7 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "- Answer ONLY what is explicitly asked. Keep answers as brief as possible.\n"
      "- For WFH questions: Minimum eligibility requires 6 months of continuous service, grade L3 or above, and a performance rating of Meets Expectations or above. List all four arrangement types (Hybrid WFH, Full Remote, Ad-hoc WFH, Emergency WFH) with their eligibility grade and max days per week.\n"
      "- For ESOP questions: ESOPs are eligible for grade L5 and above. The vesting schedule is 4 years with a 1-year cliff: 25% vests at end of Year 1, 25% at end of Year 2, and 50% at end of Year 4. The number of options granted is not specified in the policy.\n"
-     "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions about Zyro Dynamics HR policies from the provided documents.') if the question is completely unanswerable. NEVER append it to a partial answer.\n"),
+     "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions related to Zyro Dynamics HR policies. Your question is outside my scope. Please contact the relevant department directly.') if the question is completely unanswerable. NEVER append it to a partial answer.\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
 
@@ -138,7 +138,7 @@ OOS_PROMPT = ChatPromptTemplate.from_messages([
     ("human", "{question}"),
 ])
 
-REFUSAL_MESSAGE = "I can only answer questions about Zyro Dynamics HR policies from the provided documents."
+REFUSAL_MESSAGE = "I can only answer questions related to Zyro Dynamics HR policies. Your question is outside my scope. Please contact the relevant department directly."
 
 def format_docs(docs):
     formatted_parts = []
