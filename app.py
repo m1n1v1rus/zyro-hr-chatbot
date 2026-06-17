@@ -173,7 +173,7 @@ def rag_chain(question: str):
     )
     answer = chain.invoke(question)
     
-    # Extract sources from metadata directly, matching the older logic
+    
     sources = list(set(
         doc.metadata.get("source", "HR Policy").split("/")[-1].split("\\")[-1]
         for doc in retrieved_docs
@@ -213,7 +213,7 @@ def load_pipeline_v2(api_key):
         chunk_size=1000,
         chunk_overlap=200,
         length_function=len,
-        separators=["\n\n\n", "\n\n", "\n", ". ", ", ", " ", ""],
+        separators=["\n\n", "\n", ". ", ", ", " ", ""],
         is_separator_regex=False
     )
     chunks = splitter.split_documents(docs)
