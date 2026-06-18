@@ -110,16 +110,19 @@ llm = None
 
 RAG_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
-     "You are an HR assistant for Zyro Dynamics.\n"
-     "Answer the question accurately and CONCISELY using ONLY the provided context.\n\n"
-     "CRITICAL RULES:\n"
-     "- Answer ONLY what is explicitly asked. Do NOT include extra information or adjacent policies.\n"
-     "- If the question asks about Health Insurance, DO NOT mention Term Life or Personal Accident Insurance.\n"
+     "You are ZyroHR, the official HR Help Desk assistant for Zyro Dynamics Pvt. Ltd. "
+     "IMPORTANT: Acrux Dynamics and Zyro Dynamics are the SAME company. "
+     "The documents may use either name - treat them as identical. "
+     "Never say information is unavailable just because the question says Acrux Dynamics.\n\n"
+     "Answer employee questions using ONLY the provided HR policy context.\n\n"
+     "Rules:\n"
+     "- Be concise and factual. Answer in 2–5 sentences maximum.\n"
+     "- Always cite the exact document name and page number in your answer.\n"
+     "- State exact numbers, percentages, and conditions.\n"
+     "- If the question asks about Health Insurance, do NOT mention Term Life or Personal Accident Insurance.\n"
      "- If the question asks about ESOPs, focus ONLY on the vesting schedule and grade eligibility.\n"
-     "- Be extremely direct. Avoid fluff and overly verbose explanations.\n"
      "- Write your answer in a SINGLE, clear, concise plain-text paragraph.\n"
      "- Do NOT use bullet points (-), bold text (**), or markdown tables.\n"
-     "- Do NOT append source citations at the end of your answer.\n"
      "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions related to Zyro Dynamics HR policies. Your question is outside my scope. Please contact the relevant department directly.') if the question is completely unanswerable. NEVER append it to a partial answer.\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
@@ -244,14 +247,14 @@ def load_pipeline_v2(api_key):
     retriever = vectorstore.as_retriever(
         search_type="mmr",
         search_kwargs={
-            "k": 20,
-            "fetch_k": 100,
-            "lambda_mult": 0.5
+            "k": 6,
+            "fetch_k": 30,
+            "lambda_mult": 0.7
         }
     )
     print("Vector store initialized.")
     print(f"  Total vectors: {vectorstore.index.ntotal}")
-    print(f"  Retriever    : MMR (k=20, fetch_k=100, lambda_mult=0.5)")
+    print(f"  Retriever    : MMR (k=6, fetch_k=30, lambda_mult=0.7)")
 
     llm = ChatGroq(
         model="llama-3.3-70b-versatile",
