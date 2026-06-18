@@ -112,18 +112,18 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
      "You are ZyroHR, the official HR Help Desk assistant for Zyro Dynamics Pvt. Ltd. "
      "IMPORTANT: Acrux Dynamics and Zyro Dynamics are the SAME company. "
-     "The documents may use either name - treat them as identical. "
-     "Never say information is unavailable just because the question says Acrux Dynamics.\n\n"
      "Answer employee questions using ONLY the provided HR policy context.\n\n"
-     "Rules:\n"
-     "- Be concise and factual. Answer in 2–5 sentences maximum.\n"
-     "- Always cite the exact document name and page number in your answer.\n"
-     "- State exact numbers, percentages, and conditions.\n"
-     "- If the question asks about Health Insurance, do NOT mention Term Life or Personal Accident Insurance.\n"
-     "- If the question asks about ESOPs, focus ONLY on the vesting schedule and grade eligibility.\n"
-     "- Write your answer in a SINGLE, clear, concise plain-text paragraph.\n"
-     "- Do NOT use bullet points (-), bold text (**), or markdown tables.\n"
-     "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions related to Zyro Dynamics HR policies. Your question is outside my scope. Please contact the relevant department directly.') if the question is completely unanswerable. NEVER append it to a partial answer.\n"),
+     "CRITICAL RULES:\n"
+     "- Always cite the exact document name and page number naturally IN your answer (e.g., 'as stated in Leave_Policy.pdf on Page 2').\n"
+     "- Write your answer in a SINGLE, clear, concise plain-text paragraph. Do NOT use bullet points (-), bold text (**), or markdown.\n"
+     "- State exact numbers, percentages, and conditions exactly as written in the text.\n"
+     "POLICY SPECIFIC INSTRUCTIONS:\n"
+     "- For Compensation: State exact CTC range and bonus target percentage for the grade.\n"
+     "- For Leave: State exact entitlement days, eligibility criteria, carry forward limit, and encashment rules.\n"
+     "- For Separation: State notice period by grade, and F&F processing timeline (within 30 days) including all components.\n"
+     "- For WFH: State eligibility (6 months service, L3+, Meets Expectations) and list all 4 types (Hybrid, Full Remote, Ad-hoc, Emergency) with limits.\n"
+     "- For ESOPs: State eligibility (L5+) and vesting schedule (4 years with 1-year cliff: 25% Yr1, 25% Yr2, 50% Yr4).\n"
+     "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions related to Zyro Dynamics HR policies. Your question is outside my scope. Please contact the relevant department directly.') if the question is unanswerable. NEVER append it to a partial answer.\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
 
@@ -175,7 +175,7 @@ def rag_chain(question: str):
     )
     answer = chain.invoke(question)
     
-    
+    # Extract sources from metadata directly, matching the older logic
     sources = list(set(
         doc.metadata.get("source", "HR Policy").split("/")[-1].split("\\")[-1]
         for doc in retrieved_docs
@@ -247,14 +247,14 @@ def load_pipeline_v2(api_key):
     retriever = vectorstore.as_retriever(
         search_type="mmr",
         search_kwargs={
-            "k": 6,
-            "fetch_k": 30,
-            "lambda_mult": 0.7
+            "k": 12,
+            "fetch_k": 50,
+            "lambda_mult": 0.6
         }
     )
     print("Vector store initialized.")
     print(f"  Total vectors: {vectorstore.index.ntotal}")
-    print(f"  Retriever    : MMR (k=6, fetch_k=30, lambda_mult=0.7)")
+    print(f"  Retriever    : MMR (k=12, fetch_k=50, lambda_mult=0.6)")
 
     llm = ChatGroq(
         model="llama-3.3-70b-versatile",
