@@ -276,7 +276,7 @@ def load_pipeline_v2(api_key):
     print(f"  Retriever    : MMR (k=15, fetch_k=60, lambda_mult=0.6)")
 
     llm = ChatGroq(
-        model="llama3-8b-8192",
+        model="llama-3.3-70b-versatile",
         temperature=0.0,
         max_tokens=512,
         api_key=api_key,
