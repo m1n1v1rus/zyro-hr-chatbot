@@ -208,17 +208,17 @@ def rag_chain(question: str):
 @traceable(name="ask_bot")
 def ask_bot(question: str) -> dict:
     classifier_chain = OOS_PROMPT | llm | StrOutputParser()
-    verdict = _invoke_with_retry(classifier_chain, {"question": question}).strip().upper()
+    verdict = _safe_invoke(classifier_chain.invoke, {"question": question}).strip().upper()
 
-    time.sleep(5)  # Rate Limit Safety
+    time.sleep(3)  # Short pause
 
     if "OUT" in verdict:
         return {"answer": REFUSAL_MESSAGE, "sources": [], "blocked": True}
 
-    result = rag_chain(question)
+    result = _safe_invoke(rag_chain, question)
     result["blocked"] = False
 
-    time.sleep(5)  # Rate Limit Safety
+    time.sleep(3)  # Short pause
 
     return result
 
