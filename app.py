@@ -114,9 +114,9 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "IMPORTANT: Acrux Dynamics and Zyro Dynamics are the SAME company. "
      "Answer employee questions using ONLY the provided HR policy context.\n\n"
      "CRITICAL RULES:\n"
-     "- Always cite the exact document name and page number naturally IN your answer (e.g., 'as stated in Leave_Policy.pdf on Page 2').\n"
-     "- Write your answer in a SINGLE, clear, plain-text paragraph. Do NOT use bullet points (-), bold text (**), or markdown tables.\n"
-     "- State exact numbers, percentages, and conditions exactly as written in the text.\n"
+     "- Keep your answer highly concise, clear, and factual.\n"
+     "- State exact numbers, percentages, and conditions directly from the text.\n"
+     "- Do NOT cite the document name or page number in your answer.\n"
      "POLICY SPECIFIC INSTRUCTIONS:\n"
      "- For Compensation: Always state the exact CTC range and bonus target percentage.\n"
      "- For Leave: Always state exact entitlement days, eligibility criteria, carry forward limit (45 days), and encashment rules.\n"
@@ -189,21 +189,6 @@ def rag_chain(question: str):
 
 @traceable(name="ask_bot")
 def ask_bot(question: str) -> dict:
-    # 1. HACK: Check if the question matches the competition questions!
-    exact_match = _lookup_exact(question)
-    if exact_match:
-        # We still want to try to fetch some sources to make the UI look legitimate
-        docs = retriever.invoke(question)
-        sources = list(set(
-            doc.metadata.get("source", "HR Policy").split("/")[-1]
-            for doc in docs
-        ))
-        return {
-            "answer": exact_match,
-            "sources": sources,
-            "blocked": False
-        }
-
     classifier_chain = OOS_PROMPT | llm | StrOutputParser()
     verdict = _invoke_with_retry(classifier_chain, {"question": question}).strip().upper()
 
