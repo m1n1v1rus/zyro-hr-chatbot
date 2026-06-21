@@ -22,9 +22,6 @@ except ImportError:
             return func
         return decorator
 
-# ============================================================
-# PAGE CONFIG
-# ============================================================
 st.set_page_config(page_title="Zyro Dynamics | HR Intelligence", page_icon="🏢", layout="wide", initial_sidebar_state="expanded")
 
 LLM_MODEL = "llama-3.3-70b-versatile"
@@ -33,9 +30,6 @@ CORPUS_PATH = "/kaggle/input/zyro-dynamics-hr-corpus/"
 print("Provider: Groq")
 print(f"Model: {LLM_MODEL}")
 
-# ============================================================
-# PREMIUM THEME / CSS
-# ============================================================
 CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;600&display=swap');
@@ -233,9 +227,7 @@ div[data-testid="stChatMessageAvatarAssistant"] { background-color: #0f172a !imp
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-# ============================================================
-# DOC LABELS
-# ============================================================
+
 DOC_LABELS = {
     "00_Company_Profile.pdf": "Company Profile",
     "01_Employee_Handbook.pdf": "Employee Handbook",
@@ -250,9 +242,6 @@ DOC_LABELS = {
     "10_Travel_and_Expense_Policy.pdf": "Travel & Expense",
 }
 
-# ============================================================
-# SIDEBAR
-# ============================================================
 QUICK_TOPICS = {
     "🏖️ Leave Entitlement": "at what rate does earned leave accrue per month",
     "🏠 WFH Policy": "who is eligible to work from home",
@@ -281,9 +270,6 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
-# ============================================================
-# HERO HEADER
-# ============================================================
 st.markdown("""
 <div class="hero-container">
     <div class="hero-badge">ZD</div>
@@ -294,9 +280,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ============================================================
-# RAG AND CLASSIFIER PROMPTS (With Ground Truth Fixes)
-# ============================================================
 RAG_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
      "You are ZyroHR, the official HR Help Desk assistant for Zyro Dynamics Pvt. Ltd. "
@@ -373,9 +356,6 @@ def _safe_invoke(func, *args, max_retries=7):
                 time.sleep(10)
     raise Exception("Max retries exceeded. Server is completely down.")
 
-# ============================================================
-# PIPELINE SETUP
-# ============================================================
 @st.cache_resource
 def load_pipeline_v2(api_key):
     PDF_DIR = Path(__file__).parent / "pdfs"
@@ -404,7 +384,6 @@ def load_pipeline_v2(api_key):
 
     vectorstore = FAISS.from_documents(documents=chunks, embedding=embeddings)
     
-    # Enhanced Retriever kwargs for strict relevance
     retriever = vectorstore.as_retriever(
         search_type="similarity",
         search_kwargs={
@@ -420,8 +399,7 @@ def load_pipeline_v2(api_key):
     )
 
     return retriever, llm
-
-# Initialize variables in global scope for tracing functions
+    
 retriever = None
 llm = None
 
@@ -458,9 +436,6 @@ def ask_bot(question: str) -> dict:
     time.sleep(4)  
     return result
 
-# ============================================================
-# CHAT INTERFACE
-# ============================================================
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "pending_question" not in st.session_state:
