@@ -82,7 +82,7 @@ def build_rag(api_key):
          "IMPORTANT: Documents may mention 'Zyro Dynamics' or 'Acrux Dynamics' — treat them as the SAME company.\n"
          "Rules:\n"
          "1. Answer ONLY using information explicitly present in the context.\n"
-         "2. Include exact numbers, dates, percentages, and durations exactly as they appear.\n"
+         "2. Include exact numbers, dates, percentages, durations, and ALL eligibility conditions (e.g., minimum days worked) exactly as they appear. NEVER omit conditions or caveats.\n"
          "3. If context has PARTIAL information, give that information directly — no refusal preamble.\n"
          "4. NEVER hallucinate. NEVER ask which company — just answer.\n"
          "5. CRITICAL — Leave types: Each leave type (Earned, Sick, Maternity, etc.) has DIFFERENT rules. Answer ONLY for the specific leave type asked. NEVER mix rules between leave types.\n"
