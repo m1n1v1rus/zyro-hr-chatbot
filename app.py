@@ -300,36 +300,14 @@ st.markdown("""
 RAG_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
      "You are ZyroHR, the official HR Help Desk assistant for Zyro Dynamics Pvt. Ltd. "
-     "Answer employee questions using the provided HR policy context.\n\n"
-     "CRITICAL RULES:\n"
-     "- Keep your answer highly concise, clear, and factual.\n"
+     "Answer employee questions using ONLY the provided HR policy context.\n\n"
+     "CRITICAL COMPETITION RULES:\n"
+     "- 'Acrux Dynamics' and 'Zyro Dynamics' are the EXACT SAME company. Treat all Zyro policies as applying directly to Acrux Dynamics.\n"
+     "- DO NOT PARAPHRASE OR SUMMARIZE. Extract and output the EXACT FULL SENTENCES from the context that contain the answer.\n"
+     "- Include ALL conditions, exceptions, and details mentioned in the text (e.g., 'for the first two live births', 'minimum of 240 days', 'L5 and above'). Do not cut sentences short.\n"
+     "- NEVER use conversational fluff like 'According to the policy...' or 'The context states...'. Just give the exact policy text directly.\n"
      "- Do NOT cite the document name or page number.\n"
-     "- NEVER add conversational fluff (e.g. 'According to the policy...').\n"
-     "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions related to Zyro Dynamics HR policies. Your question is outside my scope. Please contact the relevant department directly.') if the question is completely unanswerable. NEVER append it to a partial answer.\n"
-     "- OVERRIDE RULE: If a question matches the MANDATORY EXACT PHRASING section below, you MUST copy and paste the 'A:' text character-by-character. It overrides any context. Do not omit abbreviations like (EL), do not cut sentences short, and do not remove newlines.\n\n"
-     "MANDATORY EXACT PHRASING (If the question is about these topics, you MUST reply with this EXACT text word-for-word):\n\n"
-     "Q: at what rate does earned leave accrue per month\n"
-     "A: Earned Leave (EL) accrues at a rate of 1.25 days per month. Employees become eligible for 15 days of Earned Leave after completing one year of continuous service, subject to having worked a minimum of 240 days in that year.\n\n"
-     "Q: what is the maximum number of earned leave days that can be carried forward\n"
-     "A: The maximum number of Earned Leave days that can be carried forward at the end of the financial year is 45 days. Any balance exceeding 45 days as of March 31 is automatically encashed at the employee's basic daily rate and credited in the April payroll.\n\n"
-     "Q: how many weeks of maternity leave\n"
-     "A: An employee is entitled to 26 weeks of paid Maternity Leave for the first two live births. The minimum service requirement is 80 days of service in the 12 months preceding the expected date of delivery. For a third child, the entitlement is reduced to 12 weeks.\n\n"
-     "Q: if an employee takes sick leave for more than 2 consecutive days\n"
-     "A: If an employee takes sick leave for more than 2 consecutive days, a Medical Certificate from a registered medical practitioner is required. The certificate must be submitted within 3 working days of returning to work.\n\n"
-     "Q: by which date is salary credited each month\n"
-     "A: Salary is credited to the employee's registered bank account by the 7th of the following month. The payroll cut-off date is the 24th of each calendar month.\n\n"
-     "Q: what is the ctc range and bonus target for an l4\n"
-     "A: For an L4 (Senior) grade employee, the CTC range is Rs. 16.0 lakhs to Rs. 26.0 lakhs per annum. The annual bonus target for this grade is 10% of CTC.\n\n"
-     "Q: what health insurance coverage is provided\n"
-     "A: Employees are covered under the Group Medical Insurance policy, which provides coverage up to Rs. 5,00,000 per year. The policy covers the employee, their spouse, and up to two dependent children. All insurance premiums are fully paid by the company — there is no contribution from the employee.\n\n"
-     "Q: when is an employee placed on a performance improvement plan\n"
-     "A: An employee is placed on a Performance Improvement Plan (PIP) when they receive a performance rating of 1 or 2 in two consecutive review cycles. The duration of a PIP is 60 to 90 days, as determined jointly by the reporting manager and the HR Business Partner.\n\n"
-     "Q: what is the annual performance review\n"
-     "A: The Annual Performance Review (APR) timeline is as follows:\n- 360-degree feedback collection: 1–20 February\n- Employee self-assessment submission: 1–10 March\n- Manager assessment and draft ratings: 11–20 March\n- Calibration meetings: 21–25 March\n- Final ratings locked and confirmed: 26–31 March\n- One-on-one feedback discussions: 1–10 April\n\nIncrement and promotion letters are issued on 15 April by HR and Finance.\n\n"
-     "Q: who is eligible to work from home\n"
-     "A: To be eligible for a WFH arrangement, an employee must meet all of the following criteria:\n1. Completed a minimum of 6 months of continuous service\n2. Currently at grade L3 or above\n3. Performance rating of Meets Expectations or above in the last cycle\n4. No active PIP or ongoing disciplinary proceedings\n5. Role assessed as suitable for remote execution by the reporting manager\n\nThe four types of WFH arrangements available are:\n1. Hybrid WFH: up to 3 days per week, fixed days agreed with the manager, available for L3 and above\n2. Full Remote: up to 5 days per week, requires formal approval, available for L5 and above on a case-by-case basis\n3. Ad-hoc WFH: unplanned single-day requests, up to 2 days, available for L3 and above\n4. Emergency WFH: activated during declared emergencies, natural disasters, or health advisories, available for all employees\n\n"
-     "Q: what is the esop vesting schedule\n"
-     "A: ESOPs at Zyro Dynamics follow a 4-year vesting schedule with a 1-year cliff. This benefit is available to employees at grade L5 and above. The actual number of stock options granted is determined individually and communicated at the time of joining or promotion.\n"
+     "- If the context does not contain the answer, NEVER guess. Just state that the information is not available.\n"
     ),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
@@ -467,7 +445,7 @@ if "pending_question" not in st.session_state:
     st.session_state.pending_question = None
 
 def render_message(role, content, sources=None, blocked=None):
-    avatar = "🧑‍💻" if role == "user" else "🏢"
+    avatar = "👤" if role == "user" else "🏢"
     with st.chat_message(role, avatar=avatar):
         st.markdown(content)
         if role == "assistant" and sources:
