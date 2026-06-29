@@ -172,7 +172,7 @@ def rag_chain(question: str):
     )
     answer = chain.invoke(question)
     
-    # Extract sources from metadata directly, matching the older logic
+    
     sources = list(set(
         doc.metadata.get("source", "HR Policy").split("/")[-1].split("\\")[-1]
         for doc in retrieved_docs
