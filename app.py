@@ -473,8 +473,9 @@ def render_message(role, content, sources=None, blocked=None):
     with st.chat_message(role, avatar=avatar):
         st.markdown(content)
         if role == "assistant" and sources:
-            pills = "".join(f"<span class='source-pill'>📄 {DOC_LABELS.get(s, s)}</span>" for s in sources)
-            st.markdown(f"<div class='source-row'>{pills}</div>", unsafe_allow_html=True)
+            with st.expander("📄 View Sources"):
+                for s in sources:
+                    st.markdown(f"- **{DOC_LABELS.get(s, s)}**")
         if role == "assistant" and blocked:
             st.markdown("<div class='source-row'><span class='oos-pill'>🚫 Outside HR Policy Scope</span></div>", unsafe_allow_html=True)
 
@@ -513,8 +514,9 @@ if prompt:
             blocked = result.get("blocked", False)
             
             if sources:
-                pills = "".join(f"<span class='source-pill'>📄 {DOC_LABELS.get(s, s)}</span>" for s in sources)
-                st.markdown(f"<div class='source-row'>{pills}</div>", unsafe_allow_html=True)
+                with st.expander("📄 View Sources"):
+                    for s in sources:
+                        st.markdown(f"- **{DOC_LABELS.get(s, s)}**")
             
             if blocked:
                 st.markdown("<div class='source-row'><span class='oos-pill'>🚫 Outside HR Policy Scope</span></div>", unsafe_allow_html=True)
