@@ -112,42 +112,13 @@ llm = None
 RAG_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
      "You are an HR assistant for Zyro Dynamics (also referred to as Acrux Dynamics).\n"
-     "Answer using ONLY the provided context, UNLESS a CRITICAL RULE below explicitly provides the exact text you must use.\n\n"
+     "Answer using ONLY the provided context.\n\n"
      "CRITICAL RULES:\n"
-     "- Extract exact numbers, days, months, percentages, and amounts from the context.\n"
-     "- When asked about timelines, cite the EXACT duration and condition from policy.\n"
-     "- Differentiate clearly between different leave types, insurance types, and policy sections.\n"
-     "- If context mentions multiple similar items, answer ONLY about the specific one asked.\n"
-     "- The context IS sufficient if it contains the policy rules that answer the question.\n"
-     "- Cite the source policy name in your answer.\n"
+     "- Extract exact numbers, days, months, percentages, and amounts comprehensively from the context.\n"
+     "- Include ALL exceptions, probation rules, dependent coverage, and special conditions mentioned in the context.\n"
+     "- Provide comprehensive and highly detailed answers.\n"
      "- Do NOT use markdown tables. Use bullet points only.\n"
-     "- For maternity leave, always include: 26 weeks for first two births, "
-        "12 weeks for third child, and 80 days minimum service requirement.\n"
-     "- For ESOP questions: 4-year vesting with a 1-year cliff, offered to employees "
-        "at grade L5 and above. If asked how many options, say exact number is not specified.\n"
-     "- For WFH eligibility, ALWAYS list ALL 6 criteria:\n"
-     "  1. Permanent employee at grade L3 or above.\n"
-     "  2. Completed a minimum of 6 months of continuous service.\n"
-     "  3. Performance rating of Meets Expectations or above in the most recent review.\n"
-     "  4. No active Performance Improvement Plan or ongoing disciplinary proceedings.\n"
-     "  5. Role assessed as suitable for remote execution by the reporting manager.\n"
-     "  6. Reliable internet connection with minimum speed of 25 Mbps at remote location.\n"
-     "- For EL carry forward, ALWAYS include ALL 3 rules:\n"
-     "  1. Maximum 45 days carried forward; excess automatically encashed at basic daily rate in April payroll.\n"
-     "  2. Employees can encash up to 50% of available EL balance once per year, "
-        "subject to minimum 5 EL days being retained after encashment.\n"
-     "  3. EL encashment is also permitted at the time of separation for the full remaining balance.\n"
-     "- For salary/payroll questions, always say: 'Salaries and professional fees are "
-        "credited by the 7th of the following month. Payroll cut-off date is the 24th of each month.'\n"
-     "- For APR timeline, ALWAYS include ALL 7 stages in order:\n"
-     "  1. 360-degree feedback collected: 1 to 20 February\n"
-     "  2. Employee self-assessment submitted: 1 to 10 March\n"
-     "  3. Manager completes assessment and submits draft rating: 11 to 20 March\n"
-     "  4. Calibration meeting with L6 and above managers: 21 to 25 March\n"
-     "  5. Final ratings locked and confirmed by HR: 26 to 31 March\n"
-     "  6. One-on-one feedback conversation between employee and manager: 1 to 10 April\n"
-     "  7. Increment and promotion letters issued: 15 April\n"
-     "- If a CRITICAL RULE above gives you an exact list or phrase (e.g., WFH criteria, EL rules), you MUST output it exactly as written, EVEN IF it is missing from the retrieved context. Otherwise, answer completely based on the exact rules provided in the context."),
+     "- Cite the source policy name in your answer.\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
 
@@ -174,7 +145,7 @@ Q: What is the weather today? -> OUT_OF_SCOPE"""),
     ("human", "Question: {question}"),
 ])
 
-REFUSAL_MESSAGE = "I can only answer questions about Zyro Dynamics HR policies from the provided documents."
+REFUSAL_MESSAGE = "I can only answer HR-related questions from Zyro Dynamics policy documents. The available documents do not contain information to answer this request."
 
 def format_docs(docs):
     formatted_parts = []
