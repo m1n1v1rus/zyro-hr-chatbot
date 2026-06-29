@@ -145,7 +145,7 @@ def build_rag(api_key):
     vs = FAISS.from_documents(chunks, emb)
     ret = vs.as_retriever(search_type="mmr", search_kwargs={"k": 6, "fetch_k": 20, "lambda_mult": 0.85})
 
-    llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0.0, max_tokens=512, groq_api_key=api_key)
+    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.0, max_tokens=512, groq_api_key=api_key)
 
     RAG_PROMPT = ChatPromptTemplate.from_messages([
         ("system",
