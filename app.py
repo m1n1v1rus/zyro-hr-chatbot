@@ -24,6 +24,12 @@ except ImportError:
 
 st.set_page_config(page_title="Zyro Dynamics · HR Assistant", page_icon="🚀", layout="wide", initial_sidebar_state="expanded")
 
+LLM_MODEL = "llama-3.3-70b-versatile"
+CORPUS_PATH = "/kaggle/input/zyro-dynamics-hr-corpus/"
+
+print("Provider: Groq")
+print(f"Model: {LLM_MODEL}")
+
 CUSTOM_CSS = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -98,6 +104,7 @@ with st.sidebar:
     st.markdown("HR Intelligence Platform")
     st.divider()
     groq_key = st.text_input("🔑 Groq API Key", type="password", value=os.environ.get("GROQ_API_KEY", ""), placeholder="Enter API Key")
+    
     st.divider()
     if st.button("🗑️ Clear Chat", use_container_width=True):
         st.session_state.messages = []
@@ -210,15 +217,14 @@ def ask_bot(question: str) -> dict:
     classifier_chain = OOS_PROMPT | llm | StrOutputParser()
     verdict = _safe_invoke(classifier_chain.invoke, {"question": question}).strip().upper()
 
-    time.sleep(3)  # Short pause
-
     if "OUT" in verdict:
+        time.sleep(4)  
         return {"answer": REFUSAL_MESSAGE, "sources": [], "blocked": True}
 
     result = _safe_invoke(rag_chain, question)
     result["blocked"] = False
 
-    time.sleep(3)  # Short pause
+    time.sleep(4)  
 
     return result
 
@@ -227,10 +233,10 @@ def load_pipeline_v2(api_key):
     PDF_DIR = Path(__file__).parent / "pdfs"
     corpus_path = os.environ.get("CORPUS_PATH", os.path.join(os.path.dirname(__file__), "hr_docs"))
     if not os.path.isdir(corpus_path):
-        corpus_path = "/kaggle/input/zyro-dynamics-hr-corpus/"
+        corpus_path = CORPUS_PATH
 
     loader = PyPDFDirectoryLoader(corpus_path)
-    docs = loader.load()
+    documents = loader.load()
     
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
@@ -239,7 +245,7 @@ def load_pipeline_v2(api_key):
         separators=["\n\n\n", "\n\n", "\n", ". ", ", ", " ", ""],
         is_separator_regex=False
     )
-    chunks = splitter.split_documents(docs)
+    chunks = splitter.split_documents(documents)
     chunks = [c for c in chunks if len(c.page_content.strip()) > 40]
 
     print(f"Created {len(chunks)} chunks")
@@ -276,11 +282,13 @@ def load_pipeline_v2(api_key):
     print(f"  Retriever    : MMR (k=15, fetch_k=60, lambda_mult=0.6)")
 
     llm = ChatGroq(
-        model="llama-3.3-70b-versatile",
+        model=LLM_MODEL,
         temperature=0.0,
         max_tokens=512,
-        api_key=api_key,
+        api_key=api_key
     )
+
+    print(f"LLM initialized: Groq / {LLM_MODEL}")
 
     print("RAG pipeline initialized.")
     print("Guardrails initialized.")
