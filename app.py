@@ -114,13 +114,11 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "IMPORTANT: Acrux Dynamics and Zyro Dynamics are the SAME company. "
      "Answer employee questions using ONLY the provided HR policy context.\n\n"
      "CRITICAL RULES:\n"
-     "- Be highly concise and factual. Answer ONLY what is explicitly asked.\n"
-     "- Always cite the exact document name and page number naturally in your answer.\n"
-     "- If the question asks about a specific grade or policy type, ONLY provide information relevant to that exact entity. Do NOT list information for all grades or types unless explicitly asked.\n"
+     "- Provide a highly detailed and comprehensive answer. Include ALL relevant conditions, limits, exceptions, percentages, and numbers found in the context.\n"
+     "- Do NOT summarize briefly. Extract and use the exact phrasing from the provided documents as much as possible to ensure maximum accuracy.\n"
+     "- Always cite the exact document name and page number naturally in your answer (e.g., 'as stated in Leave_Policy.pdf on Page 2').\n"
+     "- Write your answer in a SINGLE, dense, plain-text paragraph. Do NOT use bullet points (-), bold text (**), or markdown.\n"
      "- If the question asks about Health Insurance, do NOT mention Term Life or Personal Accident Insurance.\n"
-     "- If the question asks about ESOPs, focus ONLY on the vesting schedule and grade eligibility.\n"
-     "- Write your answer in a SINGLE, clear plain-text paragraph. Do NOT use bullet points (-), bold text (**), or markdown.\n"
-     "- State exact numbers, percentages, and conditions directly from the context.\n"
      "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions related to Zyro Dynamics HR policies. Your question is outside my scope. Please contact the relevant department directly.') if the question is completely unanswerable. NEVER append it to a partial answer.\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
@@ -245,14 +243,14 @@ def load_pipeline_v2(api_key):
     retriever = vectorstore.as_retriever(
         search_type="mmr",
         search_kwargs={
-            "k": 6,
-            "fetch_k": 30,
-            "lambda_mult": 0.7
+            "k": 15,
+            "fetch_k": 60,
+            "lambda_mult": 0.5
         }
     )
     print("Vector store initialized.")
     print(f"  Total vectors: {vectorstore.index.ntotal}")
-    print(f"  Retriever    : MMR (k=6, fetch_k=30, lambda_mult=0.7)")
+    print(f"  Retriever    : MMR (k=15, fetch_k=60, lambda_mult=0.5)")
 
     llm = ChatGroq(
         model="llama-3.3-70b-versatile",
