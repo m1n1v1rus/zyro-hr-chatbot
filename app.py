@@ -232,7 +232,7 @@ def ask_bot(question: str) -> dict:
     return result
 
 @st.cache_resource
-def load_pipeline(api_key):
+def load_pipeline_v2(api_key):
     global retriever, llm
     corpus_path = os.environ.get("CORPUS_PATH", os.path.join(os.path.dirname(__file__), "hr_docs"))
     if not os.path.isdir(corpus_path):
@@ -314,7 +314,7 @@ if prompt := st.chat_input("Ask your HR question..."):
             st.stop()
 
         with st.spinner("Searching HR policies..."):
-            load_pipeline(groq_key)
+            load_pipeline_v2(groq_key)
             result = ask_bot(prompt)
             answer = result.get("answer", "")
             sources = result.get("sources", [])
