@@ -12,6 +12,14 @@ from langchain_community.vectorstores import FAISS
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+try:
+    from langsmith import traceable
+except ImportError:
+    def traceable(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
 
 st.set_page_config(page_title="Zyro Dynamics · HR Assistant", page_icon="🚀", layout="wide", initial_sidebar_state="expanded")
 
@@ -97,40 +105,171 @@ with st.sidebar:
 st.markdown('<div class="zd-header">Zyro Dynamics HR Assistant</div>', unsafe_allow_html=True)
 st.markdown('<div class="zd-tagline">Ask anything about company HR policies, leave, salary, and more.</div>', unsafe_allow_html=True)
 
+# Global instances for RAG pipeline
+retriever = None
+llm = None
+
+RAG_PROMPT = ChatPromptTemplate.from_messages([
+    ("system",
+     "You are an HR assistant for Zyro Dynamics (also referred to as Acrux Dynamics).\n"
+     "Answer using ONLY the provided context.\n\n"
+     "CRITICAL RULES:\n"
+     "- Extract exact numbers, days, months, percentages, and amounts from the context.\n"
+     "- When asked about timelines, cite the EXACT duration and condition from policy.\n"
+     "- Differentiate clearly between different leave types, insurance types, and policy sections.\n"
+     "- If context mentions multiple similar items, answer ONLY about the specific one asked.\n"
+     "- The context IS sufficient if it contains the policy rules that answer the question.\n"
+     "- Cite the source policy name in your answer.\n"
+     "- Do NOT use markdown tables. Use bullet points only.\n"
+     "- For maternity leave, always include entitlement for first two births AND third child "
+        "(12 weeks), plus the minimum service requirement.\n"
+     "- For ESOP questions, the vesting schedule IS in the context: "
+        "4-year vesting with a 1-year cliff, offered to employees at grade L5 and above. "
+        "If asked how many options, state the schedule and say exact number is not specified.\n"
+     "- For WFH eligibility, ALWAYS include ALL criteria: minimum 6 months service, "
+        "grade L3 or above, performance rating of Meets Expectations or above, "
+        "no active Performance Improvement Plan or disciplinary proceedings, "
+        "role suitable for remote execution, and minimum 25 Mbps internet speed.\n"
+     "- For WFH eligibility, ALWAYS list ALL these exact criteria:\n"
+     "  1. Permanent employee at grade L3 or above.\n"
+     "  2. Completed a minimum of 6 months of continuous service.\n"
+     "  3. Performance rating of Meets Expectations or above in the most recent review.\n"
+     "  4. No active Performance Improvement Plan or ongoing disciplinary proceedings.\n"
+     "  5. Role assessed as suitable for remote execution by the reporting manager.\n"
+     "  6. Reliable internet connection with minimum speed of 25 Mbps at remote location.\n"
+     "  Even if context only shows partial criteria, include all 6 points above.\n"
+     "- If the context lacks information, say: "
+        "\"I cannot answer this based on the available HR policy documents.\"\n"
+     "- Be concise and accurate."),
+    ("human", "Context:\n{context}\n\nQuestion: {question}")
+])
+
+OOS_PROMPT = ChatPromptTemplate.from_messages([
+    ("system", """You are a classifier for an HR help desk.
+Determine if the question can be answered using Zyro Dynamics HR policy documents.
+Topics covered: company profile, employee handbook, leave policy (sick, casual, earned, maternity),
+work from home, code of conduct, performance review, compensation & benefits (salary, insurance, ESOPs),
+IT & data security, POSH, onboarding & separation, travel & expense.
+
+Respond with EXACTLY ONE WORD: "IN_SCOPE" or "OUT_OF_SCOPE".
+
+Examples:
+Q: How many sick leaves do I get? -> IN_SCOPE
+Q: What is the vesting schedule for ESOP? -> IN_SCOPE
+Q: What is the meaning of life? -> OUT_OF_SCOPE
+Q: How do I apply for WFH? -> IN_SCOPE
+Q: Tell me a joke -> OUT_OF_SCOPE
+Q: What is Python programming? -> OUT_OF_SCOPE
+Q: How is the claim process for medical insurance? -> IN_SCOPE
+Q: What is the weather today? -> OUT_OF_SCOPE"""),
+    ("human", "Question: {question}"),
+])
+
+REFUSAL_MESSAGE = "I can only answer questions about Zyro Dynamics HR policies from the provided documents."
+
+def format_docs(docs):
+    formatted_parts = []
+    for i, doc in enumerate(docs, 1):
+        source_name = doc.metadata.get("source", "HR Policy").split("/")[-1]
+        formatted_parts.append(
+            f"--- Source: {source_name} ---\n{doc.page_content}"
+        )
+    return "\n\n".join(formatted_parts)
+
+def _invoke_with_retry(chain, input_data, max_retries=5):
+    for attempt in range(max_retries):
+        try:
+            return chain.invoke(input_data)
+        except Exception as e:
+            error_msg = str(e)
+            if "429" in error_msg or "rate_limit" in error_msg.lower():
+                wait_time = 15 * (attempt + 1)
+                print(f"    Rate limit hit, waiting {wait_time}s... (retry {attempt+1}/{max_retries})")
+                time.sleep(wait_time)
+            else:
+                raise e
+    raise Exception("Max retries exceeded.")
+
+@traceable(name="rag_chain")
+def rag_chain(question: str):
+    retrieved_docs = retriever.invoke(question)
+    chain = (
+        {"context": lambda _: format_docs(retrieved_docs), "question": RunnablePassthrough()}
+        | RAG_PROMPT
+        | llm
+        | StrOutputParser()
+    )
+    answer = chain.invoke(question)
+    sources = list(set(
+        doc.metadata.get("source", "HR Policy").split("/")[-1]
+        for doc in retrieved_docs
+    ))
+    return {
+        "answer": answer.strip(),
+        "sources": sources,
+        "retrieved_docs": retrieved_docs
+    }
+
+@traceable(name="ask_bot")
+def ask_bot(question: str) -> dict:
+    classifier_chain = OOS_PROMPT | llm | StrOutputParser()
+    verdict = _invoke_with_retry(classifier_chain, {"question": question}).strip().upper()
+    time.sleep(10)
+    if "OUT" in verdict:
+        return {"answer": REFUSAL_MESSAGE, "sources": [], "blocked": True}
+    result = rag_chain(question)
+    result["blocked"] = False
+    time.sleep(10)
+    return result
 
 @st.cache_resource
 def load_pipeline(api_key):
+    global retriever, llm
     corpus_path = os.environ.get("CORPUS_PATH", os.path.join(os.path.dirname(__file__), "hr_docs"))
     if not os.path.isdir(corpus_path):
         corpus_path = "/kaggle/input/zyro-dynamics-hr-corpus/"
 
     loader = PyPDFDirectoryLoader(corpus_path)
     docs = loader.load()
-
     
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=800,
-        chunk_overlap=150,
+        chunk_size=1000,
+        chunk_overlap=200,
+        length_function=len,
         separators=["\n\n\n", "\n\n", "\n", ". ", ", ", " ", ""],
         is_separator_regex=False
     )
     chunks = splitter.split_documents(docs)
     chunks = [c for c in chunks if len(c.page_content.strip()) > 40]
 
+    print(f"Created {len(chunks)} chunks")
+    if chunks:
+        print(f"  Avg size : {sum(len(c.page_content) for c in chunks) // len(chunks)} chars")
+
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2",
         model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True}
+        encode_kwargs={
+            "normalize_embeddings": True,
+            "batch_size": 64
+        }
     )
 
-    vectorstore = FAISS.from_documents(chunks, embeddings)
+    _test_vec = embeddings.embed_query("test")
+    print(f"Embedding model initialized.")
+    print(f"  Dimensions: {len(_test_vec)}")
 
-    
+    vectorstore = FAISS.from_documents(
+        documents=chunks,
+        embedding=embeddings
+    )
     retriever = vectorstore.as_retriever(
-        search_type="mmr",
-        search_kwargs={"k": 6, "fetch_k": 20, "lambda_mult": 0.85}
+        search_type="similarity",
+        search_kwargs={"k": 6}
     )
-
+    print("Vector store initialized.")
+    print(f"  Total vectors: {vectorstore.index.ntotal}")
+    print(f"  Retriever    : Similarity (k=6)")
 
     llm = ChatGroq(
         model="openai/gpt-oss-120b",
@@ -139,61 +278,10 @@ def load_pipeline(api_key):
         api_key=api_key,
     )
 
-    
-    rag_prompt = ChatPromptTemplate.from_messages([
-        ("system",
-         "You are an HR Help Desk assistant for Zyro Dynamics (also called Acrux Dynamics — "
-         "treat them as the same company).\n\n"
-         "Answer the employee's question using ONLY the HR policy context provided below.\n"
-         "- Stay as close as possible to the exact wording, phrasing, and structure used in "
-         "the source policy document. Do not rephrase into your own words if the document's "
-         "own sentence already answers the question — use it almost verbatim.\n"
-         "- Include all numbers, dates, percentages, and conditions exactly as written.\n"
-         "- If the context discusses multiple similar items (e.g., different leave types or "
-         "insurance types), answer ONLY about the specific one asked.\n"
-         "- If the context does not contain the answer, say: "
-         "\"I cannot answer this based on the available HR policy documents.\"\n"
-         "- Keep the answer clear and concise. Use bullet points where the source itself "
-         "uses a list or table."),
-        ("human", "Context:\n{context}\n\nQuestion: {question}")
-    ])
+    print("RAG pipeline initialized.")
+    print("Guardrails initialized.")
 
-    
-    oos_prompt = ChatPromptTemplate.from_messages([
-        ("system",
-         "You are a classifier for an HR help desk.\n"
-         "Determine if the question can be answered using Zyro Dynamics HR policy documents.\n"
-         "Topics covered: company profile, employee handbook, leave policy (sick, casual, earned, maternity),\n"
-         "work from home, code of conduct, performance review, compensation & benefits (salary, insurance),\n"
-         "IT & data security, POSH, onboarding & separation, travel & expense.\n\n"
-         "Respond with EXACTLY ONE WORD: \"IN_SCOPE\" or \"OUT_OF_SCOPE\".\n\n"
-         "Examples:\n"
-         "Q: How many sick leaves do I get? -> IN_SCOPE\n"
-         "Q: How do I apply for WFH? -> IN_SCOPE\n"
-         "Q: What is the CTC range for L4 Senior grade? -> IN_SCOPE\n"
-         "Q: What is the health insurance coverage? -> IN_SCOPE\n"
-         "Q: What is the Annual Performance Review timeline? -> IN_SCOPE\n"
-         "Q: If an employee takes sick leave for more than 2 days, what is required? -> IN_SCOPE\n"
-         "Q: What is the vesting schedule for ESOP? -> OUT_OF_SCOPE\n"
-         "Q: How many stock options will I receive as a new joiner? -> OUT_OF_SCOPE\n"
-         "Q: How can I apply for a job at Acrux Dynamics? -> OUT_OF_SCOPE\n"
-         "Q: What is the recruitment and hiring process? -> OUT_OF_SCOPE\n"
-         "Q: What was the company revenue last year? -> OUT_OF_SCOPE\n"
-         "Q: How does AcruxCRM compare to Salesforce? -> OUT_OF_SCOPE\n"
-         "Q: What is the leave policy at Zoho or Freshworks? -> OUT_OF_SCOPE\n"
-         "Q: What is the meaning of life? -> OUT_OF_SCOPE\n"
-         "Q: What is the weather today? -> OUT_OF_SCOPE"),
-        ("human", "Question: {question}")
-    ])
-
-    def format_docs(docs):
-        return "\n\n---\n\n".join([
-            f"Source: {d.metadata.get('source', 'Unknown').split('/')[-1]}\n{d.page_content}"
-            for d in docs
-        ])
-
-    return retriever, llm, rag_prompt, oos_prompt, format_docs
-
+    return True
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "Hello! I am the Zyro Dynamics HR Assistant. How can I help you today?"}]
@@ -204,7 +292,7 @@ for msg in st.session_state.messages:
         if "sources" in msg and msg["sources"]:
             with st.expander("📄 View Sources"):
                 for s in msg["sources"]:
-                    st.markdown(f"- **{s.split('/')[-1]}**")
+                    st.markdown(f"- **{s}**")
 
 if prompt := st.chat_input("Ask your HR question..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -217,30 +305,16 @@ if prompt := st.chat_input("Ask your HR question..."):
             st.stop()
 
         with st.spinner("Searching HR policies..."):
-            retriever, llm, rag_prompt, oos_prompt, format_docs = load_pipeline(groq_key)
-
-            guard_chain = oos_prompt | llm | StrOutputParser()
-            guard_result = guard_chain.invoke({"question": prompt})
-            time.sleep(2)
-
-            if guard_result.strip().upper() != "IN_SCOPE":
-                answer = "I can only answer questions about Zyro Dynamics HR policies from the provided documents."
-                sources = []
-            else:
-                docs = retriever.invoke(prompt)
-                context = format_docs(docs)
-                chain = rag_prompt | llm | StrOutputParser()
-                answer = chain.invoke({"context": context, "question": prompt})
-                sources = list(set(
-                    d.metadata.get("source", "Unknown").split("/")[-1] for d in docs
-                ))
-            time.sleep(2)
+            load_pipeline(groq_key)
+            result = ask_bot(prompt)
+            answer = result.get("answer", "")
+            sources = result.get("sources", [])
 
             st.markdown(answer)
             if sources:
                 with st.expander("📄 View Sources"):
                     for s in sources:
-                        st.markdown(f"- **{s.split('/')[-1]}**")
+                        st.markdown(f"- **{s}**")
 
             st.session_state.messages.append({
                 "role": "assistant",
