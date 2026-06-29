@@ -44,16 +44,16 @@ html, body, [class*="css"] {
     font-family: 'Inter', -apple-system, sans-serif !important;
 }
 
-/* App Background: Soft warm off-white for a premium document feel */
+/* App Background: Dark Navy / Obsidian */
 .stApp {
-    background-color: #f8f9fa;
-    color: #1e293b;
+    background-color: #0b0f19;
+    color: #f1f5f9;
 }
 
-/* Sidebar: Deep Midnight Blue */
+/* Sidebar: Deep Midnight */
 section[data-testid="stSidebar"] {
-    background-color: #0f172a;
-    border-right: 1px solid #1e293b;
+    background-color: #111827;
+    border-right: 1px solid #1f2937;
 }
 section[data-testid="stSidebar"] * {
     color: #f8fafc !important;
@@ -73,10 +73,23 @@ section[data-testid="stSidebar"] .stButton button {
     margin-bottom: 5px;
 }
 section[data-testid="stSidebar"] .stButton button:hover {
-    background-color: #d4af37; /* Gold accent */
-    border-color: #d4af37;
-    color: #0f172a !important;
+    background-color: #3b82f6; /* Vivid blue accent */
+    border-color: #3b82f6;
+    color: #ffffff !important;
     transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* API Key Input Styling */
+[data-testid="stTextInput"] input {
+    background-color: #1f2937 !important;
+    color: #f8fafc !important;
+    border: 1px solid #374151 !important;
+    border-radius: 8px;
+}
+[data-testid="stTextInput"] input:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 1px #3b82f6 !important;
 }
 
 /* Header/Hero Section */
@@ -86,11 +99,11 @@ section[data-testid="stSidebar"] .stButton button:hover {
     gap: 20px;
     padding: 2rem 0;
     margin-bottom: 2rem;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #1f2937;
 }
 .hero-badge {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #d4af37;
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    color: #ffffff;
     width: 60px;
     height: 60px;
     border-radius: 14px;
@@ -100,18 +113,18 @@ section[data-testid="stSidebar"] .stButton button:hover {
     font-family: 'Outfit', sans-serif;
     font-size: 1.8rem;
     font-weight: 800;
-    box-shadow: 0 4px 15px rgba(15, 23, 42, 0.15);
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
 }
 .hero-text .title {
     font-family: 'Outfit', sans-serif;
     font-size: 2.2rem;
     font-weight: 800;
-    color: #0f172a;
+    color: #f8fafc;
     margin: 0;
     line-height: 1.2;
 }
 .hero-text .subtitle {
-    color: #64748b;
+    color: #94a3b8;
     font-size: 1rem;
     margin-top: 4px;
     font-weight: 400;
@@ -129,36 +142,37 @@ section[data-testid="stSidebar"] .stButton button:hover {
     flex-direction: row-reverse;
 }
 [data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) .stMarkdown {
-    background: linear-gradient(135deg, #1e293b, #0f172a);
-    color: #f8fafc;
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
     border-radius: 18px 18px 4px 18px;
     padding: 1rem 1.2rem;
     max-width: 80%;
     margin-left: auto;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    border: 1px solid #3b82f6;
 }
 [data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) .stMarkdown * {
-    color: #f8fafc !important;
+    color: #ffffff !important;
 }
 
 /* Assistant Message Bubble */
 [data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) .stMarkdown {
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    color: #1e293b;
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    color: #e2e8f0;
     border-radius: 18px 18px 18px 4px;
     padding: 1rem 1.2rem;
     max-width: 85%;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     line-height: 1.6;
 }
 [data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) .stMarkdown * {
-    color: #1e293b !important;
+    color: #e2e8f0 !important;
 }
 
 /* Avatars */
-div[data-testid="stChatMessageAvatarUser"] { background-color: #d4af37 !important; }
-div[data-testid="stChatMessageAvatarAssistant"] { background-color: #0f172a !important; }
+div[data-testid="stChatMessageAvatarUser"] { background-color: #3b82f6 !important; }
+div[data-testid="stChatMessageAvatarAssistant"] { background-color: #0f172a !important; border: 1px solid #334155; }
 
 /* Source Pills */
 .source-row {
@@ -168,9 +182,9 @@ div[data-testid="stChatMessageAvatarAssistant"] { background-color: #0f172a !imp
     margin-top: 12px;
 }
 .source-pill {
-    background-color: #f1f5f9;
-    color: #475569;
-    border: 1px solid #cbd5e1;
+    background-color: #0f172a;
+    color: #94a3b8;
+    border: 1px solid #334155;
     border-radius: 20px;
     padding: 4px 12px;
     font-size: 0.75rem;
@@ -181,13 +195,14 @@ div[data-testid="stChatMessageAvatarAssistant"] { background-color: #0f172a !imp
     transition: all 0.2s ease;
 }
 .source-pill:hover {
-    background-color: #e2e8f0;
-    color: #0f172a;
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border-color: #475569;
 }
 .oos-pill {
-    background-color: #fef2f2;
-    color: #991b1b;
-    border: 1px solid #fecaca;
+    background-color: rgba(153, 27, 27, 0.2);
+    color: #fca5a5;
+    border: 1px solid #991b1b;
     border-radius: 20px;
     padding: 4px 12px;
     font-size: 0.75rem;
@@ -203,16 +218,16 @@ div[data-testid="stChatMessageAvatarAssistant"] { background-color: #0f172a !imp
     background-color: transparent !important;
 }
 [data-testid="stChatInput"] textarea {
-    background-color: #ffffff !important;
-    border: 2px solid #e2e8f0 !important;
+    background-color: #1e293b !important;
+    border: 1px solid #334155 !important;
     border-radius: 16px !important;
-    color: #1e293b !important;
+    color: #f8fafc !important;
     padding: 1rem !important;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
     transition: border-color 0.3s ease;
 }
 [data-testid="stChatInput"] textarea:focus {
-    border-color: #d4af37 !important;
+    border-color: #3b82f6 !important;
 }
 </style>
 """
