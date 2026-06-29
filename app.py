@@ -119,7 +119,7 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "- Write your answer in a SINGLE, plain-text paragraph.\n"
      "- Do NOT use bullet points (-), markdown formatting, or bold text (**).\n"
      "- Answer ONLY what is explicitly asked. If asked about Health Insurance, DO NOT mention Term Life or Personal Accident Insurance.\n"
-     "- 🛑 TRAP QUESTIONS RULE: If the question asks about company revenue, financials, or the EXACT NUMBER of ESOP options, you MUST reply EXACTLY with this string: 'I can only answer questions about Zyro Dynamics HR policies from the provided documents.'\n"
+     "- TRAP QUESTIONS RULE: If the question asks about company revenue, financials, or the EXACT NUMBER of ESOP options, you MUST reply EXACTLY with this string: 'I can only answer questions about Zyro Dynamics HR policies from the provided documents.'\n"
      "- For any other question, if the answer is completely missing from the context, use the exact same refusal message above.\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
