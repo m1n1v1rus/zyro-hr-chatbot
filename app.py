@@ -15,110 +15,188 @@ from langchain_core.runnables import RunnablePassthrough
 from langsmith import traceable
 
 # ==========================================
-# 💎 PREMIUM UI CONFIGURATION
+# 💎 UNIQUE PREMIUM UI — Indigo Violet Theme
 # ==========================================
-st.set_page_config(page_title="Zyro HR Assistant", page_icon="✨", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Zyro Dynamics · HR Assistant", page_icon="🚀", layout="wide", initial_sidebar_state="expanded")
 
 CUSTOM_CSS = """
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+    /* ─── Base Reset ─── */
     html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        font-family: 'Inter', -apple-system, sans-serif !important;
     }
-    
-    /* Hide Streamlit Branding */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    
-    /* Main Background */
+    #MainMenu, footer { visibility: hidden; }
+
+    /* ─── Background: Subtle Mesh Gradient ─── */
     .stApp {
-        background-color: #0f111a;
+        background: #0c0a1a;
+        background-image:
+            radial-gradient(ellipse 80% 60% at 10% 20%, rgba(88, 28, 135, 0.15), transparent),
+            radial-gradient(ellipse 60% 50% at 90% 80%, rgba(15, 23, 42, 0.3), transparent),
+            radial-gradient(ellipse 40% 40% at 50% 10%, rgba(56, 189, 248, 0.08), transparent);
         color: #e2e8f0;
     }
 
-    /* Gradient Title */
-    .premium-title {
-        background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+    /* ─── Animated Gradient Header ─── */
+    @keyframes shimmer {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    .zd-header {
+        background: linear-gradient(270deg, #7c3aed, #2563eb, #06b6d4, #7c3aed);
+        background-size: 300% 300%;
+        animation: shimmer 6s ease infinite;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-size: 2.5rem;
+        font-size: 2.4rem;
         font-weight: 800;
-        margin-bottom: 0px;
-        padding-bottom: 0px;
+        letter-spacing: -0.5px;
+        margin: 0; padding: 0;
     }
-    
-    .premium-subtitle {
+    .zd-tagline {
         color: #94a3b8;
-        font-size: 1.1rem;
-        font-weight: 500;
-        margin-bottom: 20px;
+        font-size: 0.95rem;
+        font-weight: 400;
+        margin-top: 2px;
+        margin-bottom: 24px;
+        letter-spacing: 0.3px;
     }
+    .zd-tagline span { color: #a78bfa; font-weight: 600; }
 
-    /* Sidebar Styling (Glassmorphism) */
+    /* ─── Sidebar ─── */
     [data-testid="stSidebar"] {
-        background: rgba(15, 23, 42, 0.6) !important;
-        backdrop-filter: blur(12px) !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        background: linear-gradient(180deg, #0f0d1f 0%, #13102a 100%) !important;
+        border-right: 1px solid rgba(124, 58, 237, 0.15) !important;
     }
-    
-    /* Chat Message Bubbles */
+    .sidebar-brand {
+        text-align: center;
+        padding: 16px 0 8px;
+    }
+    .sidebar-brand .logo { font-size: 2.2rem; }
+    .sidebar-brand .name {
+        font-size: 1.05rem; font-weight: 700;
+        background: linear-gradient(90deg, #a78bfa, #38bdf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .sidebar-brand .sub { font-size: 0.72rem; color: #64748b; letter-spacing: 2px; text-transform: uppercase; }
+    .sidebar-divider {
+        height: 1px; margin: 14px 0;
+        background: linear-gradient(90deg, transparent, rgba(124,58,237,0.3), transparent);
+    }
+    .topic-chip {
+        display: inline-block;
+        background: rgba(124, 58, 237, 0.12);
+        border: 1px solid rgba(124, 58, 237, 0.2);
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.73rem;
+        color: #c4b5fd;
+        margin: 3px 2px;
+    }
+
+    /* ─── Chat Bubbles ─── */
     .stChatMessage {
-        background-color: #1e2235 !important;
-        border-radius: 16px !important;
-        padding: 10px 20px !important;
-        margin-bottom: 15px !important;
-        border: 1px solid rgba(255, 255, 255, 0.05) !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-        transition: transform 0.2s ease;
+        background: rgba(15, 13, 31, 0.7) !important;
+        backdrop-filter: blur(10px) !important;
+        border-radius: 14px !important;
+        padding: 14px 20px !important;
+        margin-bottom: 12px !important;
+        border: 1px solid rgba(124, 58, 237, 0.1) !important;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.2) !important;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
-    
     .stChatMessage:hover {
-        transform: translateY(-2px);
+        border-color: rgba(124, 58, 237, 0.25) !important;
+        box-shadow: 0 4px 20px rgba(124, 58, 237, 0.08) !important;
     }
 
-    /* Input Box Styling */
+    /* ─── Chat Input ─── */
     [data-testid="stChatInput"] {
-        border-radius: 24px !important;
-        border: 1px solid #334155 !important;
-        background-color: #1e2235 !important;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+        border-radius: 28px !important;
+        border: 1px solid rgba(124, 58, 237, 0.2) !important;
+        background: rgba(15, 13, 31, 0.8) !important;
+        backdrop-filter: blur(8px) !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.2) !important;
+        transition: all 0.3s ease;
     }
-    
     [data-testid="stChatInput"]:focus-within {
-        border-color: #4facfe !important;
-        box-shadow: 0 0 0 2px rgba(79, 172, 254, 0.2) !important;
+        border-color: #7c3aed !important;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15), 0 8px 32px rgba(0,0,0,0.2) !important;
     }
 
-    /* Success / Info Boxes */
-    .stAlert {
-        border-radius: 12px !important;
-        border: none !important;
+    /* ─── Source Chips ─── */
+    .src-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .src-chip {
+        display: inline-flex; align-items: center; gap: 4px;
+        background: rgba(56, 189, 248, 0.08);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 20px;
+        padding: 3px 10px;
+        font-size: 0.72rem;
+        color: #7dd3fc;
     }
-    
-    .src-badge {
-        background: rgba(25, 118, 210, 0.1); border-left: 3px solid #1976d2;
-        padding: 6px 10px; border-radius: 4px;
-        font-size: 0.82em; margin-top: 6px; color: #90caf9;
+    .src-chip::before { content: "📄"; font-size: 0.7rem; }
+
+    /* ─── Status Dot ─── */
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+    .status-dot {
+        display: inline-block; width: 7px; height: 7px;
+        background: #22c55e; border-radius: 50%;
+        animation: pulse 2s infinite;
+        margin-right: 6px;
+    }
+
+    /* ─── Misc ─── */
+    .stAlert { border-radius: 10px !important; border: none !important; }
+    button[kind="secondary"] {
+        border-color: rgba(124,58,237,0.3) !important;
+        color: #c4b5fd !important;
+    }
+    button[kind="secondary"]:hover {
+        background: rgba(124,58,237,0.1) !important;
+        border-color: #7c3aed !important;
     }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-st.markdown('<h1 class="premium-title">Zyro HR Assistant ✨</h1>', unsafe_allow_html=True)
-st.markdown('<p class="premium-subtitle">Enterprise-grade HR Policy resolution powered by Advanced RAG.</p>', unsafe_allow_html=True)
+# ─── Header ───
+st.markdown('<h1 class="zd-header">Zyro Dynamics HR Assistant</h1>', unsafe_allow_html=True)
+st.markdown('<p class="zd-tagline"><span class="status-dot"></span>Powered by <span>Advanced RAG</span> · Ask anything about company HR policies</p>', unsafe_allow_html=True)
 
+# ─── Sidebar ───
 with st.sidebar:
-    st.markdown('<h3 style="color:#4facfe;">Configuration</h3>', unsafe_allow_html=True)
-    groq_key = st.text_input("Groq API Key", type="password", value=os.environ.get("GROQ_API_KEY", ""))
-    st.divider()
-    st.info("Topics: Leave, Salary, WFH, Performance, Insurance, Conduct.")
-    if st.button("Clear chat", use_container_width=True):
+    st.markdown("""
+    <div class="sidebar-brand">
+        <div class="logo">🚀</div>
+        <div class="name">Zyro Dynamics</div>
+        <div class="sub">HR Intelligence Platform</div>
+    </div>
+    <div class="sidebar-divider"></div>
+    """, unsafe_allow_html=True)
+
+    groq_key = st.text_input("🔑 API Key", type="password", value=os.environ.get("GROQ_API_KEY", ""), placeholder="Enter Groq API Key")
+
+    st.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
+    st.markdown("**Covered Topics**", help="Questions the assistant can answer")
+    topics = ["Leave Policy", "Salary & CTC", "Health Insurance", "WFH Policy", "Performance Review", "Code of Conduct", "IT Security", "Travel & Expense"]
+    chips_html = "".join([f'<span class="topic-chip">{t}</span>' for t in topics])
+    st.markdown(f'<div>{chips_html}</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
+    if st.button("🗑️  Clear Conversation", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
 
+    st.markdown('<div style="position:fixed;bottom:16px;left:16px;font-size:0.65rem;color:#475569;">v2.0 · Built with Streamlit & LangChain</div>', unsafe_allow_html=True)
+
+# ─── Session State ───
 if "messages" not in st.session_state or not st.session_state.messages:
-    st.session_state.messages = [{"role": "assistant", "content": "Hello! I am the Zyro Dynamics HR Assistant. How can I help you today?"}]
+    st.session_state.messages = [{"role": "assistant", "content": "👋 Welcome! I'm your Zyro Dynamics HR policy assistant. Ask me about leave policies, insurance, compensation, WFH rules, or any other HR topic."}]
 
 REFUSAL_MESSAGE = (
     "I can only answer questions about Zyro Dynamics HR policies "
