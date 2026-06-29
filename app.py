@@ -313,7 +313,6 @@ if prompt := st.chat_input("Ask your HR question..."):
             st.stop()
 
         with st.spinner("Searching HR policies..."):
-            global retriever, llm
             retriever, llm = load_pipeline_v2(groq_key)
             result = ask_bot(prompt)
             answer = result.get("answer", "")
