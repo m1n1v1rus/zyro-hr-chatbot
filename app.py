@@ -142,10 +142,9 @@ REFUSAL_MESSAGE = "I can only answer questions related to Zyro Dynamics HR polic
 def format_docs(docs):
     formatted_parts = []
     for i, doc in enumerate(docs, 1):
-        source_name = doc.metadata.get("source", "HR Policy").split("/")[-1]
-        formatted_parts.append(
-            f"--- Source: {source_name} ---\n{doc.page_content}"
-        )
+        filename = doc.metadata.get("source", "HR Policy").split("/")[-1]
+        page = doc.metadata.get("page", 0) + 1
+        formatted_parts.append(f"[{filename} - Page {page}]\n{doc.page_content.strip()}")
     return "\n\n".join(formatted_parts)
 
 def _invoke_with_retry(chain, input_data, max_retries=5):
@@ -173,7 +172,7 @@ def rag_chain(question: str):
     )
     answer = chain.invoke(question)
     
-    
+    # Extract sources from metadata directly, matching the older logic
     sources = list(set(
         doc.metadata.get("source", "HR Policy").split("/")[-1].split("\\")[-1]
         for doc in retrieved_docs
@@ -189,15 +188,17 @@ def rag_chain(question: str):
 def ask_bot(question: str) -> dict:
     classifier_chain = OOS_PROMPT | llm | StrOutputParser()
     verdict = _invoke_with_retry(classifier_chain, {"question": question}).strip().upper()
-    time.sleep(3)
+
+    time.sleep(10)  
+
     if "OUT" in verdict:
         return {"answer": REFUSAL_MESSAGE, "sources": [], "blocked": True}
+
     result = rag_chain(question)
-    if REFUSAL_MESSAGE in result["answer"]:
-        result["blocked"] = True
-    else:
-        result["blocked"] = False
-    time.sleep(3)
+    result["blocked"] = False
+
+    time.sleep(10)   
+
     return result
 
 @st.cache_resource
@@ -224,7 +225,7 @@ def load_pipeline_v2(api_key):
         print(f"  Avg size : {sum(len(c.page_content) for c in chunks) // len(chunks)} chars")
 
     embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-mpnet-base-v2",
+        model_name="sentence-transformers/all-MiniLM-L6-v2",
         model_kwargs={"device": "cpu"},
         encode_kwargs={
             "normalize_embeddings": True,
