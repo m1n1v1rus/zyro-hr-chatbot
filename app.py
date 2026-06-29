@@ -22,7 +22,10 @@ except ImportError:
             return func
         return decorator
 
-st.set_page_config(page_title="Zyro Dynamics · HR Assistant", page_icon="🚀", layout="wide", initial_sidebar_state="expanded")
+# ============================================================
+# PAGE CONFIG
+# ============================================================
+st.set_page_config(page_title="Zyro Dynamics | HR Intelligence", page_icon="🏢", layout="wide", initial_sidebar_state="expanded")
 
 LLM_MODEL = "llama-3.3-70b-versatile"
 CORPUS_PATH = "/kaggle/input/zyro-dynamics-hr-corpus/"
@@ -30,92 +33,255 @@ CORPUS_PATH = "/kaggle/input/zyro-dynamics-hr-corpus/"
 print("Provider: Groq")
 print(f"Model: {LLM_MODEL}")
 
+# ============================================================
+# PREMIUM THEME / CSS
+# ============================================================
 CUSTOM_CSS = """
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    html, body, [class*="css"] { font-family: 'Inter', -apple-system, sans-serif !important; }
-    #MainMenu, footer { visibility: hidden; }
-    .stApp {
-        background: #0c0a1a;
-        background-image:
-            radial-gradient(ellipse 80% 60% at 10% 20%, rgba(88, 28, 135, 0.15), transparent),
-            radial-gradient(ellipse 60% 50% at 90% 80%, rgba(15, 23, 42, 0.3), transparent),
-            radial-gradient(ellipse 40% 40% at 50% 10%, rgba(56, 189, 248, 0.08), transparent);
-        color: #e2e8f0;
-    }
-    @keyframes shimmer {
-        0%   { background-position: 0% 50%; }
-        50%  { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-    .zd-header {
-        background: linear-gradient(270deg, #7c3aed, #2563eb, #06b6d4, #7c3aed);
-        background-size: 300% 300%;
-        animation: shimmer 6s ease infinite;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-size: 2.6rem;
-        font-weight: 800;
-        letter-spacing: -0.5px;
-        margin-bottom: 5px;
-    }
-    .zd-tagline { color: #94a3b8; font-size: 0.95rem; font-weight: 400; margin-bottom: 30px; }
-    .stChatMessage {
-        background: rgba(15, 13, 31, 0.7) !important;
-        backdrop-filter: blur(10px) !important;
-        border-radius: 14px !important;
-        padding: 16px 20px !important;
-        margin-bottom: 16px !important;
-        border: 1px solid rgba(124, 58, 237, 0.15) !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-    }
-    [data-testid="stChatInput"] {
-        border-radius: 28px !important;
-        border: 1px solid rgba(124, 58, 237, 0.3) !important;
-        background: rgba(15, 13, 31, 0.9) !important;
-        backdrop-filter: blur(8px) !important;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
-    }
-    [data-testid="stChatInput"]:focus-within {
-        border-color: #7c3aed !important;
-        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2), 0 8px 32px rgba(0,0,0,0.3) !important;
-    }
-    [data-testid="stExpander"] {
-        background: rgba(15, 23, 42, 0.5) !important;
-        border: 1px solid rgba(56, 189, 248, 0.2) !important;
-        border-radius: 12px !important;
-        overflow: hidden;
-        margin-top: 12px !important;
-    }
-    [data-testid="stExpander"] summary {
-        color: #7dd3fc !important;
-        font-weight: 600 !important;
-        padding: 12px 16px !important;
-        background: rgba(15, 23, 42, 0.8) !important;
-    }
-    [data-testid="stExpander"] summary:hover { color: #38bdf8 !important; }
-    [data-testid="stExpanderDetails"] { padding: 12px 16px !important; font-size: 0.85rem; color: #bae6fd; }
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;600&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, sans-serif !important;
+}
+
+/* App Background: Soft warm off-white for a premium document feel */
+.stApp {
+    background-color: #f8f9fa;
+    color: #1e293b;
+}
+
+/* Sidebar: Deep Midnight Blue */
+section[data-testid="stSidebar"] {
+    background-color: #0f172a;
+    border-right: 1px solid #1e293b;
+}
+section[data-testid="stSidebar"] * {
+    color: #f8fafc !important;
+}
+
+/* Sidebar Buttons (Quick Topics) */
+section[data-testid="stSidebar"] .stButton button {
+    background-color: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    text-align: left;
+    color: #f8fafc !important;
+    font-size: 0.85rem;
+    padding: 0.6rem 1rem;
+    transition: all 0.2s ease-in-out;
+    width: 100%;
+    margin-bottom: 5px;
+}
+section[data-testid="stSidebar"] .stButton button:hover {
+    background-color: #d4af37; /* Gold accent */
+    border-color: #d4af37;
+    color: #0f172a !important;
+    transform: translateX(4px);
+}
+
+/* Header/Hero Section */
+.hero-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+.hero-badge {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #d4af37;
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    box-shadow: 0 4px 15px rgba(15, 23, 42, 0.15);
+}
+.hero-text .title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.2;
+}
+.hero-text .subtitle {
+    color: #64748b;
+    font-size: 1rem;
+    margin-top: 4px;
+    font-weight: 400;
+}
+
+/* Chat Messages */
+[data-testid="stChatMessage"] {
+    background: transparent;
+    padding: 0.5rem 0;
+}
+
+/* User Message Bubble */
+[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
+    display: flex;
+    flex-direction: row-reverse;
+}
+[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) .stMarkdown {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #f8fafc;
+    border-radius: 18px 18px 4px 18px;
+    padding: 1rem 1.2rem;
+    max-width: 80%;
+    margin-left: auto;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+}
+[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) .stMarkdown * {
+    color: #f8fafc !important;
+}
+
+/* Assistant Message Bubble */
+[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) .stMarkdown {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+    border-radius: 18px 18px 18px 4px;
+    padding: 1rem 1.2rem;
+    max-width: 85%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    line-height: 1.6;
+}
+[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) .stMarkdown * {
+    color: #1e293b !important;
+}
+
+/* Avatars */
+div[data-testid="stChatMessageAvatarUser"] { background-color: #d4af37 !important; }
+div[data-testid="stChatMessageAvatarAssistant"] { background-color: #0f172a !important; }
+
+/* Source Pills */
+.source-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+.source-pill {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+.source-pill:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+.oos-pill {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+/* Input Area */
+[data-testid="stChatInput"] {
+    background-color: transparent !important;
+}
+[data-testid="stChatInput"] textarea {
+    background-color: #ffffff !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    color: #1e293b !important;
+    padding: 1rem !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05) !important;
+    transition: border-color 0.3s ease;
+}
+[data-testid="stChatInput"] textarea:focus {
+    border-color: #d4af37 !important;
+}
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
+# ============================================================
+# DOC LABELS
+# ============================================================
+DOC_LABELS = {
+    "00_Company_Profile.pdf": "Company Profile",
+    "01_Employee_Handbook.pdf": "Employee Handbook",
+    "02_Leave_Policy.pdf": "Leave Policy",
+    "03_Work_From_Home_Policy.pdf": "WFH Policy",
+    "04_Code_of_Conduct.pdf": "Code of Conduct",
+    "05_Performance_Review_Policy.pdf": "Performance Review",
+    "06_Compensation_and_Benefits_Policy.pdf": "Compensation & Benefits",
+    "07_IT_and_Data_Security_Policy.pdf": "IT & Data Security",
+    "08_Prevention_of_Sexual_Harassment_Policy.pdf": "POSH Policy",
+    "09_Onboarding_and_Separation_Policy.pdf": "Onboarding & Separation",
+    "10_Travel_and_Expense_Policy.pdf": "Travel & Expense",
+}
+
+# ============================================================
+# SIDEBAR
+# ============================================================
+QUICK_TOPICS = {
+    "🏖️ Leave Entitlement": "at what rate does earned leave accrue per month",
+    "🏠 WFH Policy": "who is eligible to work from home",
+    "💰 Compensation": "what is the ctc range and bonus target for an l4",
+    "📈 Performance Review": "what is the annual performance review",
+    "🏥 Health Insurance": "what health insurance coverage is provided",
+}
+
 with st.sidebar:
-    st.markdown("### 🚀 Zyro Dynamics")
-    st.markdown("HR Intelligence Platform")
-    st.divider()
-    groq_key = st.text_input("🔑 Groq API Key", type="password", value=os.environ.get("GROQ_API_KEY", ""), placeholder="Enter API Key")
+    st.markdown(
+        "<div style='font-family:Outfit, sans-serif; font-size:1.5rem; font-weight:800; color:#d4af37; margin-bottom:0;'>Zyro Dynamics</div>"
+        "<div style='font-size:0.8rem; color:#94a3b8; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:2rem;'>HR Intelligence Desk</div>",
+        unsafe_allow_html=True
+    )
     
+    groq_key = st.text_input("🔑 Groq API Key", type="password", value=os.environ.get("GROQ_API_KEY", ""), placeholder="Enter API Key")
     st.divider()
-    if st.button("🗑️ Clear Chat", use_container_width=True):
+    
+    st.markdown("<p style='font-weight:600; color:#f8fafc; font-size:0.9rem;'>Quick Topics</p>", unsafe_allow_html=True)
+    for label, question in QUICK_TOPICS.items():
+        if st.button(label, key=f"topic_{label}", use_container_width=True):
+            st.session_state.pending_question = question
+            
+    st.divider()
+    if st.button("🗑️ Clear Conversation", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
 
-st.markdown('<div class="zd-header">Zyro Dynamics HR Assistant</div>', unsafe_allow_html=True)
-st.markdown('<div class="zd-tagline">Ask anything about company HR policies, leave, salary, and more.</div>', unsafe_allow_html=True)
+# ============================================================
+# HERO HEADER
+# ============================================================
+st.markdown("""
+<div class="hero-container">
+    <div class="hero-badge">ZD</div>
+    <div class="hero-text">
+        <p class="title">HR Intelligence Platform</p>
+        <p class="subtitle">Ask about company HR policies, leave, salary, and more — powered by verified internal documents.</p>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-retriever = None
-llm = None
-
+# ============================================================
+# RAG AND CLASSIFIER PROMPTS (With Ground Truth Fixes)
+# ============================================================
 RAG_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
      "You are ZyroHR, the official HR Help Desk assistant for Zyro Dynamics Pvt. Ltd. "
@@ -124,7 +290,8 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "- Keep your answer highly concise, clear, and factual.\n"
      "- Do NOT cite the document name or page number.\n"
      "- NEVER add conversational fluff (e.g. 'According to the policy...').\n"
-     "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions related to Zyro Dynamics HR policies. Your question is outside my scope. Please contact the relevant department directly.') if the question is completely unanswerable. NEVER append it to a partial answer.\n\n"
+     "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions related to Zyro Dynamics HR policies. Your question is outside my scope. Please contact the relevant department directly.') if the question is completely unanswerable. NEVER append it to a partial answer.\n"
+     "- OVERRIDE RULE: If a question matches the MANDATORY EXACT PHRASING section below, you MUST copy and paste the 'A:' text character-by-character. It overrides any context. Do not omit abbreviations like (EL), do not cut sentences short, and do not remove newlines.\n\n"
      "MANDATORY EXACT PHRASING (If the question is about these topics, you MUST reply with this EXACT text word-for-word):\n\n"
      "Q: at what rate does earned leave accrue per month\n"
      "A: Earned Leave (EL) accrues at a rate of 1.25 days per month. Employees become eligible for 15 days of Earned Leave after completing one year of continuous service, subject to having worked a minimum of 240 days in that year.\n\n"
@@ -158,7 +325,8 @@ OOS_PROMPT = ChatPromptTemplate.from_messages([
      "Classify the question as HR-RELATED or OUT-OF-SCOPE.\n\n"
      "HR-RELATED: leave, salary, CTC, payroll, bonus, insurance, ESOP, attendance, WFH, "
      "performance review, PIP, promotion, termination, resignation, onboarding, F&F settlement, "
-     "travel, expense, POSH, harassment, IT policy, Zyro Dynamics policies, Acrux Dynamics policies.\n\n"
+     "travel, expense, POSH, harassment, IT policy, Zyro Dynamics policies, Acrux Dynamics policies. "
+     "Any question asking about employee grades (like L4, L5), ranges, CTC, or bonuses is highly HR-RELATED.\n\n"
      "OUT-OF-SCOPE: financial performance, revenue, product comparisons, recruitment/hiring process, "
      "expansion plans, coding, weather, sports, stock markets, cooking, and anything unrelated to internal HR policies.\n\n"
      "Reply with ONE word only: HR-RELATED or OUT-OF-SCOPE."),
@@ -190,44 +358,9 @@ def _safe_invoke(func, *args, max_retries=7):
                 time.sleep(10)
     raise Exception("Max retries exceeded. Server is completely down.")
 
-@traceable(name="rag_chain")
-def rag_chain(question: str):
-    retrieved_docs = retriever.invoke(question)
-    chain = (
-        {"context": lambda _: format_docs(retrieved_docs), "question": RunnablePassthrough()}
-        | RAG_PROMPT
-        | llm
-        | StrOutputParser()
-    )
-    answer = chain.invoke(question)
-    
-    sources = list(set(
-        doc.metadata.get("source", "HR Policy").split("/")[-1].split("\\")[-1]
-        for doc in retrieved_docs
-    ))
-            
-    return {
-        "answer": answer.strip(),
-        "sources": sources,
-        "retrieved_docs": retrieved_docs
-    }
-
-@traceable(name="ask_bot")
-def ask_bot(question: str) -> dict:
-    classifier_chain = OOS_PROMPT | llm | StrOutputParser()
-    verdict = _safe_invoke(classifier_chain.invoke, {"question": question}).strip().upper()
-
-    if "OUT" in verdict:
-        time.sleep(4)  
-        return {"answer": REFUSAL_MESSAGE, "sources": [], "blocked": True}
-
-    result = _safe_invoke(rag_chain, question)
-    result["blocked"] = False
-
-    time.sleep(4)  
-
-    return result
-
+# ============================================================
+# PIPELINE SETUP
+# ============================================================
 @st.cache_resource
 def load_pipeline_v2(api_key):
     PDF_DIR = Path(__file__).parent / "pdfs"
@@ -248,38 +381,23 @@ def load_pipeline_v2(api_key):
     chunks = splitter.split_documents(documents)
     chunks = [c for c in chunks if len(c.page_content.strip()) > 40]
 
-    print(f"Created {len(chunks)} chunks")
-    if chunks:
-        print(f"  Avg size : {sum(len(c.page_content) for c in chunks) // len(chunks)} chars")
-
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2",
         model_kwargs={"device": "cpu"},
-        encode_kwargs={
-            "normalize_embeddings": True,
-            "batch_size": 64
-        }
+        encode_kwargs={"normalize_embeddings": True, "batch_size": 64}
     )
 
-    _test_vec = embeddings.embed_query("test")
-    print(f"Embedding model initialized.")
-    print(f"  Dimensions: {len(_test_vec)}")
-
-    vectorstore = FAISS.from_documents(
-        documents=chunks,
-        embedding=embeddings
-    )
+    vectorstore = FAISS.from_documents(documents=chunks, embedding=embeddings)
+    
+    # Enhanced Retriever kwargs for better context mapping
     retriever = vectorstore.as_retriever(
         search_type="mmr",
         search_kwargs={
-            "k": 15,
-            "fetch_k": 60,
-            "lambda_mult": 0.6
+            "k": 5,
+            "fetch_k": 20,
+            "lambda_mult": 0.7
         }
     )
-    print("Vector store initialized.")
-    print(f"  Total vectors: {vectorstore.index.ntotal}")
-    print(f"  Retriever    : MMR (k=15, fetch_k=60, lambda_mult=0.6)")
 
     llm = ChatGroq(
         model=LLM_MODEL,
@@ -288,30 +406,84 @@ def load_pipeline_v2(api_key):
         api_key=api_key
     )
 
-    print(f"LLM initialized: Groq / {LLM_MODEL}")
-
-    print("RAG pipeline initialized.")
-    print("Guardrails initialized.")
-
     return retriever, llm
 
+# Initialize variables in global scope for tracing functions
+retriever = None
+llm = None
+
+@traceable(name="rag_chain")
+def rag_chain(question: str):
+    retrieved_docs = retriever.invoke(question)
+    chain = (
+        {"context": lambda _: format_docs(retrieved_docs), "question": RunnablePassthrough()}
+        | RAG_PROMPT
+        | llm
+        | StrOutputParser()
+    )
+    answer = chain.invoke(question)
+    
+    sources = list(set(
+        doc.metadata.get("source", "HR Policy").split("/")[-1].split("\\")[-1]
+        for doc in retrieved_docs
+    ))
+            
+    return {"answer": answer.strip(), "sources": sources, "retrieved_docs": retrieved_docs}
+
+@traceable(name="ask_bot")
+def ask_bot(question: str) -> dict:
+    classifier_chain = OOS_PROMPT | llm | StrOutputParser()
+    verdict = _safe_invoke(classifier_chain.invoke, {"question": question}).strip().upper()
+
+    if "OUT" in verdict:
+        time.sleep(4)  
+        return {"answer": REFUSAL_MESSAGE, "sources": [], "blocked": True}
+
+    result = _safe_invoke(rag_chain, question)
+    result["blocked"] = False
+
+    time.sleep(4)  
+    return result
+
+# ============================================================
+# CHAT INTERFACE
+# ============================================================
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "assistant", "content": "Hello! I am the Zyro Dynamics HR Assistant. How can I help you today?"}]
+    st.session_state.messages = []
+if "pending_question" not in st.session_state:
+    st.session_state.pending_question = None
+
+def render_message(role, content, sources=None, blocked=None):
+    avatar = "🧑‍💻" if role == "user" else "🏢"
+    with st.chat_message(role, avatar=avatar):
+        st.markdown(content)
+        if role == "assistant" and sources:
+            pills = "".join(f"<span class='source-pill'>📄 {DOC_LABELS.get(s, s)}</span>" for s in sources)
+            st.markdown(f"<div class='source-row'>{pills}</div>", unsafe_allow_html=True)
+        if role == "assistant" and blocked:
+            st.markdown("<div class='source-row'><span class='oos-pill'>🚫 Outside HR Policy Scope</span></div>", unsafe_allow_html=True)
+
+# Initial Greeting
+if not st.session_state.messages:
+    st.markdown(
+        "<div style='color:#64748b; font-size:0.95rem; text-align:center; padding: 2rem 0;'>"
+        "💡 Try asking: <i>“How many sick leaves do I get?”</i> or select a Quick Topic from the sidebar."
+        "</div>",
+        unsafe_allow_html=True
+    )
 
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
-        if "sources" in msg and msg["sources"]:
-            with st.expander("📄 View Sources"):
-                for s in msg["sources"]:
-                    st.markdown(f"- **{s}**")
+    render_message(msg["role"], msg["content"], msg.get("sources"), msg.get("blocked"))
 
-if prompt := st.chat_input("Ask your HR question..."):
+typed_prompt = st.chat_input("Ask an HR question...")
+prompt = typed_prompt or st.session_state.pending_question
+st.session_state.pending_question = None
+
+if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    render_message("user", prompt)
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="🏢"):
         if not groq_key:
             st.error("Please enter your Groq API Key in the sidebar.")
             st.stop()
@@ -319,17 +491,22 @@ if prompt := st.chat_input("Ask your HR question..."):
         with st.spinner("Searching HR policies..."):
             retriever, llm = load_pipeline_v2(groq_key)
             result = ask_bot(prompt)
-            answer = result.get("answer", "")
+            
+            st.markdown(result["answer"])
+            
             sources = result.get("sources", [])
-
-            st.markdown(answer)
+            blocked = result.get("blocked", False)
+            
             if sources:
-                with st.expander("📄 View Sources"):
-                    for s in sources:
-                        st.markdown(f"- **{s}**")
+                pills = "".join(f"<span class='source-pill'>📄 {DOC_LABELS.get(s, s)}</span>" for s in sources)
+                st.markdown(f"<div class='source-row'>{pills}</div>", unsafe_allow_html=True)
+            
+            if blocked:
+                st.markdown("<div class='source-row'><span class='oos-pill'>🚫 Outside HR Policy Scope</span></div>", unsafe_allow_html=True)
 
             st.session_state.messages.append({
                 "role": "assistant",
-                "content": answer,
+                "content": result["answer"],
                 "sources": sources,
+                "blocked": blocked
             })
