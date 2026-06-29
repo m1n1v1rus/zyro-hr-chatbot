@@ -105,7 +105,6 @@ with st.sidebar:
 st.markdown('<div class="zd-header">Zyro Dynamics HR Assistant</div>', unsafe_allow_html=True)
 st.markdown('<div class="zd-tagline">Ask anything about company HR policies, leave, salary, and more.</div>', unsafe_allow_html=True)
 
-
 retriever = None
 llm = None
 
@@ -115,10 +114,10 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "Answer the question accurately and CONCISELY using ONLY the provided context.\n\n"
      "CRITICAL RULES:\n"
      "- State the rule precisely. Provide ALL specific numbers, days, and conditions from the context without any extra padding.\n"
-     "- ALWAYS cite the short policy name at the very end of your answer exactly like this: Source: [Short Policy Name] (e.g., 'Source: Leave Policy' instead of the full document code).\n"
-     "- Do NOT use brackets or a period after the policy name. (EXCEPTION: Do not cite any source if you are refusing to answer).\n"
      "- Write your answer in a SINGLE, plain-text paragraph. Do NOT use bullet points (-), markdown formatting, or bold text (**).\n"
      "- Answer ONLY what is explicitly asked. Keep answers as brief as possible.\n"
+     "- Do NOT append source citations at the end of your answer. Just provide the factual answer.\n"
+     "- Do NOT hedge with phrases like 'not fully specified' or 'may vary' unless it is genuinely missing from context.\n"
      "- For WFH questions: Minimum eligibility requires 6 months of continuous service, grade L3 or above, and a performance rating of Meets Expectations or above. List all four arrangement types (Hybrid WFH, Full Remote, Ad-hoc WFH, Emergency WFH) with their eligibility grade and max days per week.\n"
      "- For ESOP questions: ESOPs are eligible for grade L5 and above. The vesting schedule is 4 years with a 1-year cliff: 25% vests at end of Year 1, 25% at end of Year 2, and 50% at end of Year 4. The number of options granted is not specified in the policy.\n"
      "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions related to Zyro Dynamics HR policies. Your question is outside my scope. Please contact the relevant department directly.') if the question is completely unanswerable. NEVER append it to a partial answer.\n"),
@@ -174,21 +173,11 @@ def rag_chain(question: str):
     )
     answer = chain.invoke(question)
     
-    
-    import re
-    sources = []
-    match = re.search(r'Source:\s*([^.\)]+)', answer, re.IGNORECASE)
-    if match:
-        cited_policy = match.group(1).strip().strip("()").strip()
-        
-        for doc in retrieved_docs:
-            filename = doc.metadata.get("source", "HR Policy").split("/")[-1].split("\\")[-1]
-            
-            if cited_policy.replace(" ", "_").lower() in filename.lower():
-                sources.append(filename)
-                break
-        if not sources:
-            sources.append(f"{cited_policy}.pdf")
+    # Extract sources from metadata directly, matching the older logic
+    sources = list(set(
+        doc.metadata.get("source", "HR Policy").split("/")[-1].split("\\")[-1]
+        for doc in retrieved_docs
+    ))
             
     return {
         "answer": answer.strip(),
@@ -221,10 +210,10 @@ def load_pipeline_v2(api_key):
     docs = loader.load()
     
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=600,
-        chunk_overlap=100,
+        chunk_size=1000,
+        chunk_overlap=200,
         length_function=len,
-        separators=["\n\n", "\n", ". ", ", ", " ", ""],
+        separators=["\n\n\n", "\n\n", "\n", ". ", ", ", " ", ""],
         is_separator_regex=False
     )
     chunks = splitter.split_documents(docs)
@@ -254,14 +243,14 @@ def load_pipeline_v2(api_key):
     retriever = vectorstore.as_retriever(
         search_type="mmr",
         search_kwargs={
-            "k": 6,
-            "fetch_k": 30,
+            "k": 10,
+            "fetch_k": 50,
             "lambda_mult": 0.7
         }
     )
     print("Vector store initialized.")
     print(f"  Total vectors: {vectorstore.index.ntotal}")
-    print(f"  Retriever    : MMR (k=6, fetch_k=30, lambda_mult=0.7)")
+    print(f"  Retriever    : MMR (k=10, fetch_k=50, lambda_mult=0.7)")
 
     llm = ChatGroq(
         model="llama-3.3-70b-versatile",
