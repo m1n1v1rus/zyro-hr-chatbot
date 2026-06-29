@@ -14,7 +14,9 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langsmith import traceable
 
-
+# ==========================================
+# 💎 PREMIUM UI CONFIGURATION
+# ==========================================
 st.set_page_config(page_title="Zyro HR Assistant", page_icon="✨", layout="wide", initial_sidebar_state="expanded")
 
 CUSTOM_CSS = """
@@ -118,7 +120,7 @@ with st.sidebar:
 if "messages" not in st.session_state or not st.session_state.messages:
     st.session_state.messages = [{"role": "assistant", "content": "Hello! I am the Zyro Dynamics HR Assistant. How can I help you today?"}]
 
-REFUSAL_MESSAGE = "I'm sorry, but I can only answer HR-related questions from Zyro Dynamics policy documents."
+REFUSAL_MESSAGE = "I can only answer questions about Zyro Dynamics HR policies from the provided documents."
 
 @st.cache_resource
 def build_rag(api_key):
@@ -131,61 +133,65 @@ def build_rag(api_key):
     docs = [d for d in docs if d.page_content.strip()]
 
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=800, chunk_overlap=150,
+        chunk_size=1000, chunk_overlap=200,
         separators=["\n\n\n", "\n\n", "\n", ". ", ", ", " ", ""]
     )
     chunks = splitter.split_documents(docs)
     chunks = [c for c in chunks if len(c.page_content.strip()) > 40]
 
     emb = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-mpnet-base-v2",
+        model_name="sentence-transformers/all-MiniLM-L6-v2",
         model_kwargs={"device": "cpu"},
         encode_kwargs={"normalize_embeddings": True}
     )
     vs = FAISS.from_documents(chunks, emb)
-    ret = vs.as_retriever(search_type="mmr", search_kwargs={"k": 7, "fetch_k": 20, "lambda_mult": 0.85})
+    ret = vs.as_retriever(search_type="similarity", search_kwargs={"k": 6})
 
-    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.0, max_tokens=512, groq_api_key=api_key)
+    llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0.1, max_tokens=512, groq_api_key=api_key)
 
     RAG_PROMPT = ChatPromptTemplate.from_messages([
         ("system",
-         "You are the official HR policy assistant. Answer ONLY using the HR policy context provided.\n"
-         "IMPORTANT: Documents may mention 'Zyro Dynamics' or 'Acrux Dynamics' — treat them as the SAME company.\n"
-         "Rules:\n"
-         "1. Answer ONLY using information explicitly present in the context.\n"
-         "2. Include exact numbers, dates, percentages, durations, and ALL eligibility conditions (e.g., minimum days worked) exactly as they appear. NEVER omit conditions or caveats.\n"
-         "3. If context has PARTIAL information, give that information directly — no refusal preamble.\n"
-         "4. NEVER hallucinate. NEVER ask which company — just answer.\n"
-         "5. CRITICAL — Leave types: Each leave type (Earned, Sick, Maternity, etc.) has DIFFERENT rules. Answer ONLY for the specific leave type asked. NEVER mix rules between leave types.\n"
-         "6. CRITICAL — Insurance types: If asked about 'health insurance' or 'medical insurance', answer ONLY about Group Medical Insurance. Ensure you mention the coverage amount of Rs. 5,00,000 per year, and that it covers employee + spouse + up to 2 dependent children, as stated in the policy documents.\n"
-         "7. CRITICAL — Complete lists and timelines: Include EVERY item in the context. NEVER give a partial list. If context has a 7-row APR table, give all 7 rows. If context has 4 WFH types, give all 4 types. Do NOT include internal process-ownership columns (e.g., 'Owner', 'Department') unless the question specifically asks who is responsible.\n"
-         "8. No repetition: state each fact ONCE; do not restate the conclusion again at the end.\n"
-         "9. CRITICAL — Style: Write in a DIRECT, FACTUAL, policy-document tone — like a sentence "
-         "taken straight from an HR policy manual. Do NOT use conversational framing such as "
-         "'At Acrux Dynamics,' 'According to the policy,' or repeating the company name. "
-         "Do not add extra context the question did not ask for. State the fact(s) plainly "
-         "and concisely, as the source document itself would state them."),
-        ("human", "HR POLICY CONTEXT:\n{context}\n\nEMPLOYEE QUESTION:\n{question}")
+         "You are an HR assistant for Zyro Dynamics (also referred to as Acrux Dynamics).\n"
+         "Answer using ONLY the provided context.\n\n"
+         "CRITICAL RULES:\n"
+         "- Extract exact numbers, days, months, percentages, and amounts from the context.\n"
+         "- When asked about timelines, cite the EXACT duration and condition from policy.\n"
+         "- Differentiate clearly between different leave types, insurance types, and policy sections.\n"
+         "- If context mentions multiple similar items, answer ONLY about the specific one asked.\n"
+         "- The context IS sufficient if it contains the policy rules that answer the question.\n"
+         "- Cite the source policy name in your answer.\n"
+         "- If the context lacks information, say: \"I cannot answer this based on the available HR policy documents.\"\n"
+         "- Be concise and accurate."),
+        ("human", "Context:\n{context}\n\nQuestion: {question}")
     ])
 
     OOS_PROMPT = ChatPromptTemplate.from_messages([
         ("system",
-         "You are a classifier for an HR chatbot. Determine whether the employee question can be answered using internal HR policy documents.\n\n"
-         "CRITICAL: 'Acrux Dynamics' and 'Zyro Dynamics' are the SAME company. Do NOT mark OUT_OF_SCOPE just because it mentions 'Acrux Dynamics'.\n\n"
-         "Reply ONLY with one word:\n"
-         "- IN_SCOPE → if the question is about HR policies, leave, salary, compensation, performance, insurance, WFH, onboarding, separation, travel, conduct, IT security.\n"
-         "- OUT_OF_SCOPE → ONLY if the question asks about company revenue, financials, product features, competitor comparisons, ESOP/stock options, job applications, or recruitment process."),
-        ("human", "{question}")
+         "You are a classifier for an HR help desk.\n"
+         "Determine if the question can be answered using Zyro Dynamics HR policy documents.\n"
+         "Topics covered: company profile, employee handbook, leave policy (sick, casual, earned, maternity),\n"
+         "work from home, code of conduct, performance review, compensation & benefits (salary, insurance, ESOPs),\n"
+         "IT & data security, POSH, onboarding & separation, travel & expense.\n\n"
+         "Respond with EXACTLY ONE WORD: \"IN_SCOPE\" or \"OUT_OF_SCOPE\".\n\n"
+         "Examples:\n"
+         "Q: How many sick leaves do I get? -> IN_SCOPE\n"
+         "Q: What is the vesting schedule for ESOP? -> IN_SCOPE\n"
+         "Q: What is the meaning of life? -> OUT_OF_SCOPE\n"
+         "Q: How do I apply for WFH? -> IN_SCOPE\n"
+         "Q: Tell me a joke -> OUT_OF_SCOPE\n"
+         "Q: What is Python programming? -> OUT_OF_SCOPE\n"
+         "Q: How is the claim process for medical insurance? -> IN_SCOPE\n"
+         "Q: What is the weather today? -> OUT_OF_SCOPE"),
+        ("human", "Question: {question}")
     ])
 
     return ret, llm, RAG_PROMPT, OOS_PROMPT
 
 def format_docs(docs):
-    formatted_parts = []
-    for doc in docs:
-        source_name = doc.metadata.get("source", "HR Policy").split("/")[-1]
-        formatted_parts.append(f"--- Source: {source_name} ---\n{doc.page_content}")
-    return "\n\n".join(formatted_parts)
+    return "\n\n---\n\n".join([
+        f"Source: {d.metadata.get('source', 'Unknown').split('/')[-1]}\n{d.page_content}"
+        for d in docs
+    ])
 
 def _invoke_with_retry(chain, inputs, max_retries=5):
     for attempt in range(max_retries):
@@ -208,11 +214,9 @@ def ask(question, ret, llm, prompt, oos_prompt):
         return REFUSAL_MESSAGE, []
     
     docs = ret.invoke(question)
-    rag_chain = (
-        {"context": lambda _: format_docs(docs), "question": RunnablePassthrough()}
-        | prompt | llm | StrOutputParser()
-    )
-    answer = _invoke_with_retry(rag_chain, question)
+    context = format_docs(docs)
+    chain = prompt | llm | StrOutputParser()
+    answer = _invoke_with_retry(chain, {"context": context, "question": question})
     time.sleep(2)
     
     sources = list(set(d.metadata.get("source", "").split("/")[-1] for d in docs))
