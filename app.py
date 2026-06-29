@@ -124,7 +124,7 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "- Do NOT use brackets or a period after the policy name. (EXCEPTION: Do not cite any source if you are refusing to answer).\n"
      "- Write your answer in a SINGLE, plain-text paragraph. Do NOT use bullet points (-), markdown formatting, or bold text (**).\n"
      "- Answer ONLY what is explicitly asked. If asked about Health Insurance, DO NOT mention Term Life.\n"
-     "- TRAP RULE: If context has absolutely no relevant info, reply EXACTLY with: 'I can only answer questions about Zyro Dynamics HR policies from the provided documents.' (Do NOT append a Source).\n"),
+     "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions about Zyro Dynamics HR policies from the provided documents.') if the question is completely unanswerable. NEVER append it to a partial answer.\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
 
@@ -257,8 +257,8 @@ def load_pipeline_v2(api_key):
     retriever = vectorstore.as_retriever(
         search_type="mmr",
         search_kwargs={
-            "k": 5,
-            "fetch_k": 20,
+            "k": 10,
+            "fetch_k": 30,
             "lambda_mult": 0.7
         }
     )
