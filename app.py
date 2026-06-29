@@ -120,7 +120,7 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "- Do NOT use bullet points (-), markdown formatting, or bold text (**).\n"
      "- Answer ONLY what is explicitly asked. If asked about Health Insurance, DO NOT mention Term Life or Personal Accident Insurance.\n"
      "- TRAP QUESTIONS RULE: If the question asks about company revenue, financials, or the EXACT NUMBER of ESOP options, you MUST reply EXACTLY with this string: 'I can only answer questions about Zyro Dynamics HR policies from the provided documents.'\n"
-     "- For any other question, if the answer is completely missing from the context, use the exact same refusal message above.\n"),
+     "- ONLY use the refusal message if the context contains absolutely NO relevant information. If the context has the answer, provide it!\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
 
@@ -200,7 +200,10 @@ def ask_bot(question: str) -> dict:
     if "OUT" in verdict:
         return {"answer": REFUSAL_MESSAGE, "sources": [], "blocked": True}
     result = rag_chain(question)
-    result["blocked"] = False
+    if result["answer"] == REFUSAL_MESSAGE:
+        result["blocked"] = True
+    else:
+        result["blocked"] = False
     time.sleep(10)
     return result
 
