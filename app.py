@@ -13,22 +13,13 @@ from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-# ==========================================
-# 💎 PREMIUM UI CONFIGURATION
-# ==========================================
 st.set_page_config(page_title="Zyro Dynamics · HR Assistant", page_icon="🚀", layout="wide", initial_sidebar_state="expanded")
 
 CUSTOM_CSS = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-    /* ─── Base Reset ─── */
-    html, body, [class*="css"] {
-        font-family: 'Inter', -apple-system, sans-serif !important;
-    }
+    html, body, [class*="css"] { font-family: 'Inter', -apple-system, sans-serif !important; }
     #MainMenu, footer { visibility: hidden; }
-
-    /* ─── Background: Subtle Mesh Gradient ─── */
     .stApp {
         background: #0c0a1a;
         background-image:
@@ -37,8 +28,6 @@ CUSTOM_CSS = """
             radial-gradient(ellipse 40% 40% at 50% 10%, rgba(56, 189, 248, 0.08), transparent);
         color: #e2e8f0;
     }
-
-    /* ─── Animated Gradient Header ─── */
     @keyframes shimmer {
         0%   { background-position: 0% 50%; }
         50%  { background-position: 100% 50%; }
@@ -55,14 +44,7 @@ CUSTOM_CSS = """
         letter-spacing: -0.5px;
         margin-bottom: 5px;
     }
-    .zd-tagline {
-        color: #94a3b8;
-        font-size: 0.95rem;
-        font-weight: 400;
-        margin-bottom: 30px;
-    }
-
-    /* ─── Chat Bubbles ─── */
+    .zd-tagline { color: #94a3b8; font-size: 0.95rem; font-weight: 400; margin-bottom: 30px; }
     .stChatMessage {
         background: rgba(15, 13, 31, 0.7) !important;
         backdrop-filter: blur(10px) !important;
@@ -72,8 +54,6 @@ CUSTOM_CSS = """
         border: 1px solid rgba(124, 58, 237, 0.15) !important;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
     }
-
-    /* ─── Chat Input ─── */
     [data-testid="stChatInput"] {
         border-radius: 28px !important;
         border: 1px solid rgba(124, 58, 237, 0.3) !important;
@@ -85,8 +65,6 @@ CUSTOM_CSS = """
         border-color: #7c3aed !important;
         box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2), 0 8px 32px rgba(0,0,0,0.3) !important;
     }
-
-    /* ─── Expander (Sources Box) ─── */
     [data-testid="stExpander"] {
         background: rgba(15, 23, 42, 0.5) !important;
         border: 1px solid rgba(56, 189, 248, 0.2) !important;
@@ -100,19 +78,12 @@ CUSTOM_CSS = """
         padding: 12px 16px !important;
         background: rgba(15, 23, 42, 0.8) !important;
     }
-    [data-testid="stExpander"] summary:hover {
-        color: #38bdf8 !important;
-    }
-    [data-testid="stExpanderDetails"] {
-        padding: 12px 16px !important;
-        font-size: 0.85rem;
-        color: #bae6fd;
-    }
+    [data-testid="stExpander"] summary:hover { color: #38bdf8 !important; }
+    [data-testid="stExpanderDetails"] { padding: 12px 16px !important; font-size: 0.85rem; color: #bae6fd; }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-# ─── Sidebar ───
 with st.sidebar:
     st.markdown("### 🚀 Zyro Dynamics")
     st.markdown("HR Intelligence Platform")
@@ -126,32 +97,40 @@ with st.sidebar:
 st.markdown('<div class="zd-header">Zyro Dynamics HR Assistant</div>', unsafe_allow_html=True)
 st.markdown('<div class="zd-tagline">Ask anything about company HR policies, leave, salary, and more.</div>', unsafe_allow_html=True)
 
+
 @st.cache_resource
 def load_pipeline(api_key):
-    corpus_path = os.environ.get(
-        "CORPUS_PATH",
-        os.path.join(os.path.dirname(__file__), "hr_docs"),
-    )
+    corpus_path = os.environ.get("CORPUS_PATH", os.path.join(os.path.dirname(__file__), "hr_docs"))
     if not os.path.isdir(corpus_path):
         corpus_path = "/kaggle/input/zyro-dynamics-hr-corpus/"
 
     loader = PyPDFDirectoryLoader(corpus_path)
     docs = loader.load()
 
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=800,
+        chunk_overlap=150,
+        separators=["\n\n\n", "\n\n", "\n", ". ", ", ", " ", ""],
+        is_separator_regex=False
+    )
     chunks = splitter.split_documents(docs)
     chunks = [c for c in chunks if len(c.page_content.strip()) > 40]
 
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2",
         model_kwargs={"device": "cpu"},
+        encode_kwargs={"normalize_embeddings": True}
     )
 
     vectorstore = FAISS.from_documents(chunks, embeddings)
+
+    
     retriever = vectorstore.as_retriever(
-        search_type="similarity",
-        search_kwargs={"k": 6},
+        search_type="mmr",
+        search_kwargs={"k": 6, "fetch_k": 20, "lambda_mult": 0.85}
     )
+
 
     llm = ChatGroq(
         model="openai/gpt-oss-120b",
@@ -160,24 +139,26 @@ def load_pipeline(api_key):
         api_key=api_key,
     )
 
+    
     rag_prompt = ChatPromptTemplate.from_messages([
         ("system",
-         "You are an HR assistant for Zyro Dynamics (also referred to as Acrux Dynamics).\n"
-         "Answer using ONLY the provided context.\n\n"
-         "CRITICAL RULES:\n"
-         "- Extract exact numbers, days, months, percentages, and amounts from the context.\n"
-         "- When asked about timelines, cite the EXACT duration and condition from policy.\n"
-         "- Differentiate clearly between different leave types, insurance types, and policy sections.\n"
-         "- If context mentions multiple similar items, answer ONLY about the specific one asked.\n"
-         "- The context IS sufficient if it contains the policy rules that answer the question.\n"
-         "- Cite the source policy name in your answer.\n"
-         "- Do NOT use markdown tables. Use plain text or bullet points only.\n"
-         "- If the context lacks information, say: "
-            "\"I cannot answer this based on the available HR policy documents.\"\n"
-         "- Be concise and accurate."),
+         "You are an HR Help Desk assistant for Zyro Dynamics (also called Acrux Dynamics — "
+         "treat them as the same company).\n\n"
+         "Answer the employee's question using ONLY the HR policy context provided below.\n"
+         "- Stay as close as possible to the exact wording, phrasing, and structure used in "
+         "the source policy document. Do not rephrase into your own words if the document's "
+         "own sentence already answers the question — use it almost verbatim.\n"
+         "- Include all numbers, dates, percentages, and conditions exactly as written.\n"
+         "- If the context discusses multiple similar items (e.g., different leave types or "
+         "insurance types), answer ONLY about the specific one asked.\n"
+         "- If the context does not contain the answer, say: "
+         "\"I cannot answer this based on the available HR policy documents.\"\n"
+         "- Keep the answer clear and concise. Use bullet points where the source itself "
+         "uses a list or table."),
         ("human", "Context:\n{context}\n\nQuestion: {question}")
     ])
 
+    
     oos_prompt = ChatPromptTemplate.from_messages([
         ("system",
          "You are a classifier for an HR help desk.\n"
@@ -234,14 +215,12 @@ if prompt := st.chat_input("Ask your HR question..."):
         if not groq_key:
             st.error("Please enter your Groq API Key in the sidebar.")
             st.stop()
-            
+
         with st.spinner("Searching HR policies..."):
             retriever, llm, rag_prompt, oos_prompt, format_docs = load_pipeline(groq_key)
 
             guard_chain = oos_prompt | llm | StrOutputParser()
             guard_result = guard_chain.invoke({"question": prompt})
-            
-            # Simulated Cool Down
             time.sleep(2)
 
             if guard_result.strip().upper() != "IN_SCOPE":
@@ -255,8 +234,6 @@ if prompt := st.chat_input("Ask your HR question..."):
                 sources = list(set(
                     d.metadata.get("source", "Unknown").split("/")[-1] for d in docs
                 ))
-
-            # Simulated Cool Down
             time.sleep(2)
 
             st.markdown(answer)
