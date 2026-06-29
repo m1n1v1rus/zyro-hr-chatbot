@@ -114,16 +114,14 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "IMPORTANT: Acrux Dynamics and Zyro Dynamics are the SAME company. "
      "Answer employee questions using ONLY the provided HR policy context.\n\n"
      "CRITICAL RULES:\n"
-     "- Always cite the exact document name and page number naturally IN your answer (e.g., 'as stated in Leave_Policy.pdf on Page 2').\n"
-     "- Write your answer in a SINGLE, clear, concise plain-text paragraph. Do NOT use bullet points (-), bold text (**), or markdown.\n"
-     "- State exact numbers, percentages, and conditions exactly as written in the text.\n"
-     "POLICY SPECIFIC INSTRUCTIONS:\n"
-     "- For Compensation: State exact CTC range and bonus target percentage for the grade.\n"
-     "- For Leave: State exact entitlement days, eligibility criteria, carry forward limit, and encashment rules.\n"
-     "- For Separation: State notice period by grade, and F&F processing timeline (within 30 days) including all components.\n"
-     "- For WFH: State eligibility (6 months service, L3+, Meets Expectations) and list all 4 types (Hybrid, Full Remote, Ad-hoc, Emergency) with limits.\n"
-     "- For ESOPs: State eligibility (L5+) and vesting schedule (4 years with 1-year cliff: 25% Yr1, 25% Yr2, 50% Yr4).\n"
-     "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions related to Zyro Dynamics HR policies. Your question is outside my scope. Please contact the relevant department directly.') if the question is unanswerable. NEVER append it to a partial answer.\n"),
+     "- Be highly concise and factual. Answer ONLY what is explicitly asked.\n"
+     "- Always cite the exact document name and page number naturally in your answer.\n"
+     "- If the question asks about a specific grade or policy type, ONLY provide information relevant to that exact entity. Do NOT list information for all grades or types unless explicitly asked.\n"
+     "- If the question asks about Health Insurance, do NOT mention Term Life or Personal Accident Insurance.\n"
+     "- If the question asks about ESOPs, focus ONLY on the vesting schedule and grade eligibility.\n"
+     "- Write your answer in a SINGLE, clear plain-text paragraph. Do NOT use bullet points (-), bold text (**), or markdown.\n"
+     "- State exact numbers, percentages, and conditions directly from the context.\n"
+     "- TRAP RULE: ONLY use the exact refusal message ('I can only answer questions related to Zyro Dynamics HR policies. Your question is outside my scope. Please contact the relevant department directly.') if the question is completely unanswerable. NEVER append it to a partial answer.\n"),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
 
@@ -217,7 +215,7 @@ def load_pipeline_v2(api_key):
         chunk_size=1000,
         chunk_overlap=200,
         length_function=len,
-        separators=["\n\n", "\n", ". ", ", ", " ", ""],
+        separators=["\n\n\n", "\n\n", "\n", ". ", ", ", " ", ""],
         is_separator_regex=False
     )
     chunks = splitter.split_documents(docs)
@@ -247,14 +245,14 @@ def load_pipeline_v2(api_key):
     retriever = vectorstore.as_retriever(
         search_type="mmr",
         search_kwargs={
-            "k": 12,
-            "fetch_k": 50,
-            "lambda_mult": 0.6
+            "k": 6,
+            "fetch_k": 30,
+            "lambda_mult": 0.7
         }
     )
     print("Vector store initialized.")
     print(f"  Total vectors: {vectorstore.index.ntotal}")
-    print(f"  Retriever    : MMR (k=12, fetch_k=50, lambda_mult=0.6)")
+    print(f"  Retriever    : MMR (k=6, fetch_k=30, lambda_mult=0.7)")
 
     llm = ChatGroq(
         model="llama-3.3-70b-versatile",
