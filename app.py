@@ -115,7 +115,7 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "Answer the question accurately and CONCISELY using ONLY the provided context.\n\n"
      "CRITICAL RULES:\n"
      "- State the rule precisely. Provide ALL specific numbers, days, and conditions from the context without any extra padding.\n"
-     "- ALWAYS cite the exact policy name at the end of your answer (e.g., 'Source: Leave Policy').\n"
+     "- ALWAYS cite the exact policy name at the very end of your answer exactly like this: Source: [Policy Name]. Do NOT use brackets.\n"
      "- Write your answer in a SINGLE, plain-text paragraph.\n"
      "- Do NOT use bullet points (-), markdown formatting, or bold text (**).\n"
      "- Answer ONLY what is explicitly asked. If asked about Health Insurance, DO NOT mention Term Life or Personal Accident Insurance.\n"
@@ -186,9 +186,9 @@ def rag_chain(question: str):
     
     import re
     sources = []
-    match = re.search(r'Source:\s*([^\.]+)', answer, re.IGNORECASE)
+    match = re.search(r'Source:\s*([^.\)]+)', answer, re.IGNORECASE)
     if match:
-        cited_policy = match.group(1).strip()
+        cited_policy = match.group(1).strip().strip("()").strip()
         
         for doc in retrieved_docs:
             filename = doc.metadata.get("source", "HR Policy").split("/")[-1].split("\\")[-1]
