@@ -147,7 +147,7 @@ Q: What is the weather today? -> OUT_OF_SCOPE"""),
     ("human", "Question: {question}"),
 ])
 
-REFUSAL_MESSAGE = "I can only answer HR-related questions from Zyro Dynamics policy documents. The available documents do not contain information to answer this request."
+REFUSAL_MESSAGE = "I can only answer questions based on Zyro Dynamics HR policy documents, and the available HR documents do not contain information to answer this request."
 
 def format_docs(docs):
     formatted_parts = []
