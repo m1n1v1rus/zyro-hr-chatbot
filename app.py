@@ -112,7 +112,7 @@ llm = None
 RAG_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
      "You are an HR assistant for Zyro Dynamics (also referred to as Acrux Dynamics).\n"
-     "Answer using ONLY the provided context.\n\n"
+     "Answer using ONLY the provided context, UNLESS a CRITICAL RULE below explicitly provides the exact text you must use.\n\n"
      "CRITICAL RULES:\n"
      "- Extract exact numbers, days, months, percentages, and amounts from the context.\n"
      "- When asked about timelines, cite the EXACT duration and condition from policy.\n"
@@ -147,7 +147,7 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "  5. Final ratings locked and confirmed by HR: 26 to 31 March\n"
      "  6. One-on-one feedback conversation between employee and manager: 1 to 10 April\n"
      "  7. Increment and promotion letters issued: 15 April\n"
-     "- Answer completely based on the exact rules provided in the context."),
+     "- If a CRITICAL RULE above gives you an exact list or phrase (e.g., WFH criteria, EL rules), you MUST output it exactly as written, EVEN IF it is missing from the retrieved context. Otherwise, answer completely based on the exact rules provided in the context."),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
 
