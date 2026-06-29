@@ -147,8 +147,6 @@ RAG_PROMPT = ChatPromptTemplate.from_messages([
      "  5. Final ratings locked and confirmed by HR: 26 to 31 March\n"
      "  6. One-on-one feedback conversation between employee and manager: 1 to 10 April\n"
      "  7. Increment and promotion letters issued: 15 April\n"
-     "- If the context lacks information, say: "
-        "\"I cannot answer this based on the available HR policy documents.\"\n"
      "- Answer completely based on the exact rules provided in the context."),
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
@@ -258,7 +256,7 @@ def load_pipeline(api_key):
         print(f"  Avg size : {sum(len(c.page_content) for c in chunks) // len(chunks)} chars")
 
     embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2",
+        model_name="sentence-transformers/all-mpnet-base-v2",
         model_kwargs={"device": "cpu"},
         encode_kwargs={
             "normalize_embeddings": True,
