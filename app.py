@@ -8,40 +8,118 @@ from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
+from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from langchain_groq import ChatGroq
+from langsmith import traceable
 
-st.set_page_config(page_title="HR Policy Assistant", page_icon="📋", layout="wide")
+# ==========================================
+# 💎 PREMIUM UI CONFIGURATION (React-like)
+# ==========================================
+st.set_page_config(page_title="Zyro HR Assistant", page_icon="✨", layout="wide")
 
-st.markdown('''
+CUSTOM_CSS = """
 <style>
-    .main {background-color: #f5f7fa;}
-    .stChatMessage {border-radius: 10px; margin: 6px 0;}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+    }
+    
+    /* Hide Streamlit Branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Main Background */
+    .stApp {
+        background-color: #0f111a;
+        color: #e2e8f0;
+    }
+
+    /* Gradient Title */
+    .premium-title {
+        background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0px;
+        padding-bottom: 0px;
+    }
+    
+    .premium-subtitle {
+        color: #94a3b8;
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 20px;
+    }
+
+    /* Sidebar Styling (Glassmorphism) */
+    [data-testid="stSidebar"] {
+        background: rgba(15, 23, 42, 0.6) !important;
+        backdrop-filter: blur(12px) !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Chat Message Bubbles */
+    .stChatMessage {
+        background-color: #1e2235 !important;
+        border-radius: 16px !important;
+        padding: 10px 20px !important;
+        margin-bottom: 15px !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+        transition: transform 0.2s ease;
+    }
+    
+    .stChatMessage:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Input Box Styling */
+    [data-testid="stChatInput"] {
+        border-radius: 24px !important;
+        border: 1px solid #334155 !important;
+        background-color: #1e2235 !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    [data-testid="stChatInput"]:focus-within {
+        border-color: #4facfe !important;
+        box-shadow: 0 0 0 2px rgba(79, 172, 254, 0.2) !important;
+    }
+
+    /* Success / Info Boxes */
+    .stAlert {
+        border-radius: 12px !important;
+        border: none !important;
+    }
+    
     .src-badge {
-        background: #e3f2fd; border-left: 3px solid #1976d2;
+        background: rgba(25, 118, 210, 0.1); border-left: 3px solid #1976d2;
         padding: 6px 10px; border-radius: 4px;
-        font-size: 0.82em; margin-top: 6px;
+        font-size: 0.82em; margin-top: 6px; color: #90caf9;
     }
 </style>
-''', unsafe_allow_html=True)
+"""
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-st.title("📋 HR Policy Assistant")
-st.caption("Ask questions about company HR policies — powered by RAG")
-st.divider()
+st.markdown('<h1 class="premium-title">Zyro HR Assistant ✨</h1>', unsafe_allow_html=True)
+st.markdown('<p class="premium-subtitle">Enterprise-grade HR Policy resolution powered by Advanced RAG.</p>', unsafe_allow_html=True)
 
 with st.sidebar:
-    st.header("Configuration")
+    st.markdown('<h3 style="color:#4facfe;">Configuration</h3>', unsafe_allow_html=True)
     groq_key = st.text_input("Groq API Key", type="password", value=os.environ.get("GROQ_API_KEY", ""))
     st.divider()
     st.info("Topics: Leave, Salary, WFH, Performance, Insurance, Conduct.")
-    if st.button("Clear chat"):
+    if st.button("Clear chat", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
 
-if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "assistant", "content": "Hello! Ask me about HR policies."}]
+if "messages" not in st.session_state or not st.session_state.messages:
+    st.session_state.messages = [{"role": "assistant", "content": "Hello! I am the Zyro Dynamics HR Assistant. How can I help you today?"}]
 
 REFUSAL_MESSAGE = "I can only answer HR-related questions from Zyro Dynamics policy documents."
 
