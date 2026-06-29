@@ -61,9 +61,11 @@ if "messages" not in st.session_state:
                     "leave, salary, benefits, performance reviews, and more."}
     ]
 
+
 # ── RAG system (cached) ───────────────────────────────────────
 @st.cache_resource
 def build_rag(api_key):
+    # Load PDFs, build FAISS store, return retriever + chain.
     pdf_dir = "./hr_docs"
     if not os.path.isdir(pdf_dir):
         pdf_dir = "/kaggle/input/zyro-dynamics-hr-corpus/"
@@ -73,7 +75,7 @@ def build_rag(api_key):
     docs = [d for d in docs if d.page_content.strip()]
 
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=800, chunk_overlap=150,
+        chunk_size=1500, chunk_overlap=300,
         separators=["\n\n\n", "\n\n", "\n", ". ", ", ", " ", ""]
     )
     chunks = splitter.split_documents(docs)
@@ -90,7 +92,7 @@ def build_rag(api_key):
         search_kwargs={"k": 6, "fetch_k": 20, "lambda_mult": 0.7}
     )
 
-    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.1,
+    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.0,
                    max_tokens=512, groq_api_key=api_key)
 
     prompt = ChatPromptTemplate.from_messages([
@@ -111,12 +113,13 @@ def build_rag(api_key):
          "can be answered using internal HR policy documents.\n\n"
          "CRITICAL TRICK: The company is sometimes called 'Acrux Dynamics' and sometimes 'Zyro Dynamics'. They are the SAME. Do NOT mark a question OUT_OF_SCOPE just because it mentions 'Acrux Dynamics'.\n\n"
          "Reply ONLY with one word:\n"
-         "- IN_SCOPE  → if the question is about HR policies, leave, salary, compensation bands (like L4 CTC), performance, insurance, WFH, etc.\n"
+         "- IN_SCOPE  → if the question is about HR policies, leave, salary, compensation bands, performance, insurance, WFH, etc.\n"
          "- OUT_OF_SCOPE → if the question asks about company revenue, financials, product features, competitor comparisons, external topics, ESOP/stock options, or job application processes."),
         ("human", "{question}")
     ])
 
     return ret, llm, prompt, oos_prompt
+
 
 def format_docs(docs):
     parts = []
@@ -124,6 +127,7 @@ def format_docs(docs):
         src = doc.metadata.get("source", "Policy").split("/")[-1]
         parts.append(f"[{src}]\n{doc.page_content}")
     return "\n\n".join(parts)
+
 
 def ask(question, ret, llm, prompt, oos_prompt):
     verdict = (oos_prompt | llm | StrOutputParser()).invoke(
@@ -141,6 +145,7 @@ def ask(question, ret, llm, prompt, oos_prompt):
     answer = chain.invoke(question)
     sources = list(set(d.metadata.get("source", "").split("/")[-1] for d in docs))
     return answer, sources
+
 
 # ── Render chat history ───────────────────────────────────────
 for msg in st.session_state.messages:
