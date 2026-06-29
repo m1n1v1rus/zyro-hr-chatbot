@@ -14,9 +14,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langsmith import traceable
 
-# ==========================================
-# 💎 PREMIUM UI CONFIGURATION (React-like)
-# ==========================================
+
 st.set_page_config(page_title="Zyro HR Assistant", page_icon="✨", layout="wide", initial_sidebar_state="expanded")
 
 CUSTOM_CSS = """
