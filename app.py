@@ -233,7 +233,6 @@ def ask_bot(question: str) -> dict:
 
 @st.cache_resource
 def load_pipeline_v2(api_key):
-    global retriever, llm
     corpus_path = os.environ.get("CORPUS_PATH", os.path.join(os.path.dirname(__file__), "hr_docs"))
     if not os.path.isdir(corpus_path):
         corpus_path = "/kaggle/input/zyro-dynamics-hr-corpus/"
@@ -290,7 +289,7 @@ def load_pipeline_v2(api_key):
     print("RAG pipeline initialized.")
     print("Guardrails initialized.")
 
-    return True
+    return retriever, llm
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "Hello! I am the Zyro Dynamics HR Assistant. How can I help you today?"}]
@@ -314,7 +313,8 @@ if prompt := st.chat_input("Ask your HR question..."):
             st.stop()
 
         with st.spinner("Searching HR policies..."):
-            load_pipeline_v2(groq_key)
+            global retriever, llm
+            retriever, llm = load_pipeline_v2(groq_key)
             result = ask_bot(prompt)
             answer = result.get("answer", "")
             sources = result.get("sources", [])
